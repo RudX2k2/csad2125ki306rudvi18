@@ -1,9 +1,6 @@
 name: Build RPS-controller code on ESP32S3 with ESP-IDF
 
-on:
-  push:
-    branches:
-      - develop
+on: push
 
 jobs:
   build:
