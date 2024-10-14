@@ -1,0 +1,44 @@
+name: Build RPS-controller code on ESP32S3 with ESP-IDF
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Install required dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git wget flex bison gperf python3 python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+
+      # Step 3: Set up ESP-IDF environment
+      - name: Set up ESP-IDF
+        run: |
+          git clone --recursive https://github.com/espressif/esp-idf.git ~/esp/esp-idf
+          ~/esp/esp-idf/install.sh
+          source ~/esp/esp-idf/export.sh
+        shell: bash
+
+      # Step 4: Build the ESP32 project
+      - name: Build ESP32 project
+        run: |
+          cd RPS_Controller
+          rm -rf build/  # Optional: Clean previous builds
+          idf.py build
+        shell: bash
+
+      # Step 5: Upload binaries as artifacts (optional)
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v2
+        with:
+          name: esp32-binaries
+          path: RPS_Controller/build/*.bin
