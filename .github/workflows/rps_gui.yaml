@@ -1,4 +1,4 @@
-name: Build Qt RPS_GUI Application
+name: Build and Test Qt RPS_GUI Application
 
 on: push
 
@@ -18,7 +18,7 @@ jobs:
           sudo apt-get install -y qt5-qmake qtbase5-dev qtbase5-dev-tools build-essential cmake
           sudo apt-get install -y libqt5serialport5-dev  # Install Qt5 SerialPort
 
-      # Step 3: Build the Qt project
+      # Step 3: Build the Qt project and tests
       - name: Build Qt Project
         run: |
           cd RPS_GUI  # Go to the directory containing CMakeLists.txt
@@ -28,9 +28,16 @@ jobs:
           make
         shell: bash
 
-      # Step 4: Upload binaries (or other artifacts) as artifacts
-      - name: Upload Binaries
+      # Step 4: Run the tests
+      - name: Run Tests
+        run: |
+          cd RPS_GUI/build  # Navigate to the build directory
+          ./tests           # Run the tests
+        shell: bash
+
+      # Step 5: Upload test results as an artifact
+      - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
-          name: rps_gui_binaries
-          path: RPS_GUI/build/*
+          name: test-results
+          path: RPS_GUI/build/tests.xml
