@@ -20,6 +20,7 @@ jobs:
       # Step 3: Build the Qt project
       - name: Build Qt Project
         run: |
+          cd RPS_GUI  # Go to the directory containing CMakeLists.txt
           mkdir -p build
           cd build
           cmake ..
@@ -30,5 +31,5 @@ jobs:
       - name: Upload Binaries
         uses: actions/upload-artifact@v3
         with:
-          name: qt_gui-binaries
-          path: build/*
+          name: qt-binaries
+          path: RPS_GUI/build/*
