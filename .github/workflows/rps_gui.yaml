@@ -16,6 +16,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qt5-qmake qtbase5-dev qtbase5-dev-tools build-essential cmake
+          sudo apt-get install -y libqt5serialport5-dev  # Install Qt5 SerialPort
 
       # Step 3: Build the Qt project
       - name: Build Qt Project
@@ -31,5 +32,5 @@ jobs:
       - name: Upload Binaries
         uses: actions/upload-artifact@v3
         with:
-          name: qt-binaries
+          name: rps_gui_binaries
           path: RPS_GUI/build/*
