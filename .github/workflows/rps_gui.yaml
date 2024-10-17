@@ -31,7 +31,7 @@ jobs:
       # Step 4: Run the tests
       - name: Run Tests
         run: |
-          cd RPS_GUI/build  # Navigate to the build directory
+          cd RPS_GUI/build/Desktop-Debug/tests  # Navigate to the build directory
           ./tests           # Run the tests
         shell: bash
 
