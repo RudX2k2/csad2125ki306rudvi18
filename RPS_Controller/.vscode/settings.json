@@ -10,7 +10,7 @@
     "idf.openOcdConfigs": [
         "board/esp32s3-builtin.cfg"
     ],
-    "idf.port": "/dev/ttyACM1",
+    "idf.port": "/dev/ttyACM0",
     "idf.pythonBinPath": "/home/rud/.espressif/python_env/idf5.3_py3.12_env/bin/python",
     "idf.toolsPath": "/home/rud/.espressif",
     "files.associations": {
