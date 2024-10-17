@@ -2,8 +2,8 @@
 
 #include <QApplication>  // Include QApplication for GUI apps
 #include <QCoreApplication>
-#include <QSerialPort>
-#include <QSerialPortInfo>
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
 #include <QDebug>
 
 

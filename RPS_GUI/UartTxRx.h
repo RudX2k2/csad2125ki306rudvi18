@@ -2,7 +2,7 @@
 #define UARTTXRX_H
 
 #include <QObject>
-#include <QSerialPort>
+#include <QtSerialPort/QSerialPort>
 
 class UartTxRx : public QObject
 {
