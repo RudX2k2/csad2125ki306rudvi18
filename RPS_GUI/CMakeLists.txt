@@ -13,13 +13,6 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core SerialPort)  # Include QtCore
 
-option(BUILD_TESTS "Build the tests" ON)
-
-if (BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
-
 
 set(PROJECT_SOURCES
     main.cpp

@@ -7,11 +7,11 @@ set(TEST_SOURCES
 # Find Qt Test module
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test)
 
-# Define the test executable
-add_executable(tests ${TEST_SOURCES})
+# Define the test executable with a unique name
+add_executable(unit_tests ${TEST_SOURCES})
 
 # Link the test executable with the UartTxRx library and Qt Test module
-target_link_libraries(tests PRIVATE
+target_link_libraries(unit_tests PRIVATE
     Qt${QT_VERSION_MAJOR}::Test
     UartTxRx
     Qt${QT_VERSION_MAJOR}::Widgets
