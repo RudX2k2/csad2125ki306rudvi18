@@ -19,20 +19,23 @@ jobs:
           sudo apt-get install -y libqt5serialport5-dev  # Install Qt5 SerialPort
 
       ## Step 3: Build the Qt project with tests enabled
-      - name: Build Qt Project with Tests
+      - name: Build GUI application
         run: |
           cd RPS_GUI  # Navigate to the project directory
           mkdir -p build
           cd build
-          cmake -DBUILD_TESTS=ON ..
+          cmake .
           make
         shell: bash
 
-      # Step 4: Run the tests
-      - name: Run Tests
+      # Step 4: Build and Run the tests
+      - name: Build and Run Tests
         run: |
-          cd RPS_GUI/build  # Ensure you're in the build directory
-          ctest --output-on-failure
+          cd RPS_GUI  # Navigate to the project directory
+          cmake -S . -B build-tests -DBUILD_TESTS=ON
+          cd build-tests/
+          cmake --build .
+          ctest
         shell: bash
 
       # Step 5: Upload test results as an artifact
@@ -40,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: test-results
-          path: RPS_GUI/build/tests.xml
+          path: RPS_GUI/build-test/Testing/Temporary/LastTest.log
