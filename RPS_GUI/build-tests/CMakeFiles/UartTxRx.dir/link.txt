@@ -1,2 +1,0 @@
-/usr/bin/ar qc libUartTxRx.a CMakeFiles/UartTxRx.dir/UartTxRx_autogen/mocs_compilation.cpp.o CMakeFiles/UartTxRx.dir/UartTxRx.cpp.o
-/usr/bin/ranlib libUartTxRx.a

@@ -2,7 +2,6 @@
 #define TESTUARTTXRX_H
 
 #include <QtTest/QtTest>
-#include "../UartTxRx.h"
 
 class TestUartTxRx : public QObject
 {

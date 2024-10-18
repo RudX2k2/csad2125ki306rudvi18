@@ -1,4 +1,5 @@
 #include "testuarttxrx.h"
+#include "../UartTxRx.h"
 
 void TestUartTxRx::testSendMessage()
 {
@@ -8,6 +9,7 @@ void TestUartTxRx::testSendMessage()
 
     // Verify that the message was sent successfully
     QVERIFY(result == 0);
+    QCOMPARE(result, 0);   // Provides detailed output in case of failure
 }
 
 void TestUartTxRx::testConnection()
@@ -18,7 +20,7 @@ void TestUartTxRx::testConnection()
 
     // Verify that the connection was initialized successfully
     QVERIFY(result == 0);
+    QCOMPARE(result, 0);  // Provides detailed output if the test fails
 }
 
 QTEST_MAIN(TestUartTxRx)
-#include "testuarttxrx.moc"
