@@ -33,7 +33,7 @@ jobs:
           cmake -S . -B build-tests -DBUILD_TESTS=ON
           cd build-tests/
           cmake --build .
-          ctest
+          ctest --verbose
         shell: bash
 
       - name: Display test output
