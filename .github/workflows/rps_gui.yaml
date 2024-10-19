@@ -22,10 +22,8 @@ jobs:
       - name: Build GUI application
         run: |
           cd RPS_GUI  # Navigate to the project directory
-          mkdir -p build
-          cd build
-          cmake .
-          make
+          cmake -S . -B build
+          cmake --build build/
         shell: bash
 
       # Step 4: Build and Run the tests
