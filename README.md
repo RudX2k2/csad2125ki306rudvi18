@@ -8,6 +8,9 @@ This is Rock-Paper-Scissors game repository, which contains two directories:
 ## Task 1
 Need to create repository with `develop` branch as main, then create branch with name `feature/develop/task1` and create `README.md` file in which will be desribed task, tachnologies ect. Then need to create TAG and make pull request with assigned teacher as approver. After aprove merge  `feature/develop/task1` into `develop`.
 
+## Task 2
+Need to create simple communication between client and server via UART. Client must send message and Host must modify it and send back to the client. Then need to establish CI in GiHub by creating YAML file which will build binaries and tests and upload results in artifacts.
+
 ## Student details
 
 Student number: __18__
