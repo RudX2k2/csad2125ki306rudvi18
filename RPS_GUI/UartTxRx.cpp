@@ -73,6 +73,6 @@ int UartTxRx::sendMessage(const QByteArray &message)
         }
     } else {
         qDebug() << "Serial port is not open!";
-        return 0;
+        return -1;
     }
 }
