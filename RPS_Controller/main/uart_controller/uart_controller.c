@@ -53,8 +53,8 @@ static void UARTCNTRL_RX_Task(void *a)
         {
             data[rxBytes] = 0; // Null-terminate the received data
 
-            if (memcmp(data, CLEINT_MSG, sizeof(CLEINT_MSG)) == 0)
-            {
+            // if (memcmp(data, CLEINT_MSG, sizeof(CLEINT_MSG)) == 0)
+            // {
                 char *new_buf = NULL;
                 int reply_msg_size = snprintf(NULL, 0, "%s%s", data, " modified message from the server");
                 new_buf = (char *)malloc(reply_msg_size + 1);
@@ -65,7 +65,7 @@ static void UARTCNTRL_RX_Task(void *a)
                     UARTCNTRL_SendData(new_buf, reply_msg_size + 1);
                     free(new_buf);
                 }
-            }
+            // }
 
             // INIHANDLER_ParseCommand((char *)data, rxBytes + 1);
 

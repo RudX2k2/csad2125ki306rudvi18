@@ -3,8 +3,9 @@
 
 #include <QObject>
 #include <QtSerialPort/QSerialPort>
+#include <QThread>
 
-class UartTxRx : public QObject
+class UartTxRx : public QThread
 {
     Q_OBJECT
 
@@ -12,6 +13,7 @@ private:
     QSerialPort serial;
     static UartTxRx* uartTxRx_;
     QByteArray rx_data;
+    QString port_name;
 
 
 public:
@@ -27,10 +29,15 @@ public:
 
     int InitConnection(const QString &portName);
 
+    int Disconnect();
+
     static UartTxRx *GetInstance();
+
+    bool isConnected();
 
 signals:
     void bufferChanged(const QByteArray &newBuffer);  // Signal to notify buffer change
+    void disconnected();
 
 public slots:
     // Slot to handle receiving data

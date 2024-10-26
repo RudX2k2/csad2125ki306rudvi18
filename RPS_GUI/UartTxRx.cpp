@@ -30,6 +30,7 @@ int UartTxRx::InitConnection(const QString &portName)
         qDebug() << "Failed to open port" << portName;
         return -1;
     } else {
+        port_name = portName;
         connect(&serial, &QSerialPort::readyRead, this, &UartTxRx::handleReadyRead);
         return 0;
     }
@@ -75,4 +76,19 @@ int UartTxRx::sendMessage(const QByteArray &message)
         qDebug() << "Serial port is not open!";
         return -1;
     }
+}
+
+bool UartTxRx::isConnected()
+{
+    return serial.isOpen();
+}
+
+int UartTxRx::Disconnect()
+{
+    serial.close();
+    if(serial.isOpen())
+    {
+        return -1;
+    }
+    return 0;
 }
