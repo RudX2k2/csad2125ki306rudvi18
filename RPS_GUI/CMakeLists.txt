@@ -21,6 +21,9 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    gamewindow.cpp
+    gamewindow.h
+    gamewindow.ui
 )
 
 # Define the UartTxRx library
@@ -46,6 +49,10 @@ else()
 
     add_executable(RPS_GUI
         ${PROJECT_SOURCES}
+        gamewindow.h gamewindow.cpp gamewindow.ui
+
+        inibyteparser.h inibyteparser.cpp
+
     )
 
 endif()

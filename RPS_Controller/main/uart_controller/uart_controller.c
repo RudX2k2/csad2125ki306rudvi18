@@ -1,16 +1,20 @@
 #include "uart_controller_private.h"
 #include "../ini_handler/ini_handler.h"
 
-static const int RX_BUF_SIZE = 1024;
 #define INIHANDLER_SENDDATA_STASKSIZE 4096
 #define INIHANDLER_GETDATA_STASKSIZE 2048
+static const int RX_BUF_SIZE = 1024;
 
 static const char *TAG = "UARTHANDL";
 #define CLEINT_MSG "Message from client"
 
 UARTHNDLR_t UARTHNDL = {
     .is_data_retrieved = false,
+    .is_new_data_collecting = false,
+    .written_tx_len = 0,
 };
+
+// SemaphoreHandle_t parseDataUartSemaphore;
 
 void UARTCNTRL_Init(void)
 {
@@ -36,40 +40,83 @@ void UARTCNTRL_Init(void)
     {
         ESP_LOGE(TAG, "error %d", err);
     }
+
+    // // Create a binary semaphore
+    // parseDataUartSemaphore = xSemaphoreCreateBinary();
+    // if (parseDataUartSemaphore == NULL)
+    // {
+    //     ESP_LOGE(TAG, "error to create semaphore");
+    // }
+
+    // Initialize semaphore to available
+    // xSemaphoreGive(parseDataUartSemaphore);
 }
+
+static void UARTCNTRL_NewDataCounterTask(void *a)
+{
+    bool should_run_count = true;
+    while (should_run_count)
+    {
+        if (--UARTHNDL.new_data_counter <= 0)
+        {
+            should_run_count = false;
+            ESP_LOGW(TAG, "Finnaly parse data: %s", UARTHNDL.rx_buffer);
+            INIHANDLER_ParseCommand((char *)UARTHNDL.rx_buffer, UARTHNDL.rx_size);
+            memset(UARTHNDL.rx_buffer, 0, RX_BUF_SIZE);
+            UARTHNDL.written_tx_len = 0;
+            UARTHNDL.is_new_data_collecting = false;
+            vTaskDelete(NULL);
+        }
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
+}
+
 
 
 static void UARTCNTRL_RX_Task(void *a)
 {
-    static const char *RX_TASK_TAG = "RX_TASK";
-    esp_log_level_set(RX_TASK_TAG, ESP_LOG_INFO);
-    uint8_t data[RX_BUF_SIZE];
+    uint8_t data[1024];
 
+    // Configure UART for longer timeout
+    uart_set_rx_timeout(UART_NUM_0, 10);  // 10 symbol times timeout
+    
     while (1)
     {
-        // Read bytes from UART with a 1000ms timeout
-        const int rxBytes = uart_read_bytes(UART_NUM_0, data, RX_BUF_SIZE, 1000 / portTICK_PERIOD_MS);
+        const int rxBytes = uart_read_bytes(UART_NUM_0, data, 1024, 500 / portTICK_PERIOD_MS);
         if (rxBytes > 0)
         {
-            data[rxBytes] = 0; // Null-terminate the received data
-
-            // if (memcmp(data, CLEINT_MSG, sizeof(CLEINT_MSG)) == 0)
-            // {
-                char *new_buf = NULL;
-                int reply_msg_size = snprintf(NULL, 0, "%s%s", data, " modified message from the server");
-                new_buf = (char *)malloc(reply_msg_size + 1);
-
-                if (new_buf != NULL)
-                {
-                    snprintf(new_buf, reply_msg_size + 1, "%s%s", data, " modified message from the server");
-                    UARTCNTRL_SendData(new_buf, reply_msg_size + 1);
-                    free(new_buf);
+            // ESP_LOGD(TAG, "Received %d bytes", rxBytes);
+            
+            if ((UARTHNDL.rx_size + rxBytes) < RX_BUF_SIZE)
+            {
+                memcpy(&(UARTHNDL.rx_buffer[UARTHNDL.rx_size]), data, rxBytes);
+                UARTHNDL.rx_size += rxBytes;
+                
+                // Keep reading for a short while to ensure we get all data
+                int empty_reads = 0;
+                while (empty_reads < 5) {  // Try up to 5 times
+                    vTaskDelay(pdMS_TO_TICKS(20));  // Wait a bit
+                    int more_bytes = uart_read_bytes(UART_NUM_0, data, 1024, 100 / portTICK_PERIOD_MS);
+                    if (more_bytes > 0) {
+                        if ((UARTHNDL.rx_size + more_bytes) < RX_BUF_SIZE) {
+                            memcpy(&(UARTHNDL.rx_buffer[UARTHNDL.rx_size]), data, more_bytes);
+                            UARTHNDL.rx_size += more_bytes;
+                            empty_reads = 0;  // Reset counter if we got data
+                        }
+                    } else {
+                        empty_reads++;
+                    }
                 }
-            // }
-
-            // INIHANDLER_ParseCommand((char *)data, rxBytes + 1);
-
-            memset(data, 0, RX_BUF_SIZE);
+                
+                // Now process the complete message
+                // ESP_LOGW(TAG, "Complete data received, size: %d", UARTHNDL.rx_size);
+                // ESP_LOGW(TAG, "Data: %s", UARTHNDL.rx_buffer);
+                
+                INIHANDLER_ParseCommand((char *)UARTHNDL.rx_buffer, UARTHNDL.rx_size);
+                memset(UARTHNDL.rx_buffer, 0, RX_BUF_SIZE);
+                UARTHNDL.rx_size = 0;
+            }
+            memset(data, 0, 1024);
         }
     }
 }

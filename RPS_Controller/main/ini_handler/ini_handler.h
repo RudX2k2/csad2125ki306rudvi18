@@ -18,4 +18,8 @@ void INIHANDLER_ParseCommand(char * buffer, uint32_t size);
 /// @param ini_file 
 void INIHANDLER_PrintINI(const char * filename);
 
+
+void INIHANDLER_SendWaitTurn(void);
+
+
 #endif // INIHANDLER_H

@@ -16,11 +16,14 @@
 #include "esp_log.h"
 #include "ini_handler/ini_handler.h"
 #include "uart_controller/uart_controller.h"
+#include "emulator/emulator.h"
 
 void app_main(void)
 {
     UARTCNTRL_Init();
     UARTCNTRL_EnableRXDataPolling();
+
+    EMULATOR_Init();
 
     while (1)
     {

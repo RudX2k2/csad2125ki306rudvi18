@@ -52,7 +52,7 @@ UartTxRx* UartTxRx::GetInstance()
 void UartTxRx::handleReadyRead()
 {
     QByteArray data = serial.readAll();
-    qDebug() << "Data received:" << data;
+    // qDebug() << "Data received:" << data;
     rx_data = data;
 
     emit bufferChanged(rx_data);
@@ -62,16 +62,25 @@ void UartTxRx::handleReadyRead()
 int UartTxRx::sendMessage(const QByteArray &message)
 {
     if (serial.isOpen()) {
-        serial.write(message);
-        if (serial.waitForBytesWritten(1000)) {  // Wait for the data to be written
-            qDebug() << "Message sent:" << message;
-            serial.clear();
-            return 0;
-        } else {
-            qDebug() << "Failed to send message: " << message;
-            serial.clear();
-            return -1;
+        // serial.write(message);
+        // Add small delays between writes to prevent data loss
+        for(int i = 0; i < message.size(); i += 32) {  // Send in 32-byte chunks
+            QByteArray chunk = message.mid(i, 32);
+            serial.write(chunk);
+            serial.flush();
+            // QThread::msleep(10);  // Small delay between chunks
         }
+        qDebug() << "Message sent";
+        return 0;
+        // if (serial.waitForBytesWritten(1000)) {  // Wait for the data to be written
+        //     qDebug() << "Message sent:" << message;
+        //     serial.clear();
+        //     return 0;
+        // } else {
+        //     qDebug() << "Failed to send message: " << message;
+        //     serial.clear();
+        //     return -1;
+        // }
     } else {
         qDebug() << "Serial port is not open!";
         return -1;
