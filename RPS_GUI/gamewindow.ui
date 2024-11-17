@@ -57,6 +57,13 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
+       <widget class="QLabel" name="lblCurrentPlayer">
+        <property name="text">
+         <string>PLAYER 1</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Orientation::Vertical</enum>
@@ -87,7 +94,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="brnPaper">
+       <widget class="QPushButton" name="btnPaper">
         <property name="text">
          <string>Paper</string>
         </property>

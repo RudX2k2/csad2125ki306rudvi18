@@ -9,6 +9,7 @@ GameData* GameData::instance = nullptr;
 
 GameData::GameData(QObject* parent) : QObject(parent) {
     // Initialize your game data here
+    connect(IniByteParser::GetInstance(), &IniByteParser::ServerSentGameState, this, &GameData::setCurrentGameState);
 
 }
 
@@ -22,4 +23,12 @@ GameData* GameData::getInstance(QObject* parent) {
         instance = new GameData(parent);
     }
     return instance;
+}
+
+GameState GameData::getCurrentGameState()
+{
+    return current_gamestate;
+}
+void GameData::setCurrentGameState(GameState gamestate){
+    current_gamestate = gamestate;
 }

@@ -125,7 +125,9 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
         int isServerMsg = (QString::fromUtf8(ini.GetValue("WaitClientTurn","Server", 0))).toInt();
         if(isServerMsg == 1)
         {
-            emit ServerWaitTurn();
+            int player_to_wait_turn = (QString::fromUtf8(ini.GetValue("WaitClientTurn","Player", 0))).toInt();
+
+            emit ServerWaitTurn(player_to_wait_turn);
         }
     }
 }

@@ -22,6 +22,8 @@ signals:
 public:
     static void GameData_SetGameState(GameState set_gamestate);
     static GameData* getInstance(QObject* parent = nullptr);
+    GameState getCurrentGameState();
+    void setCurrentGameState(GameState gamestate);
     // Add your game data methods and properties here
 };
 

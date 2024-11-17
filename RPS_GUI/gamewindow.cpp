@@ -11,6 +11,7 @@ GameWindow::GameWindow(QMainWindow* mainWindow, QWidget *parent) :
     ui(new Ui::GameWindow),
     mainWindow(mainWindow)  // Initialize the mainWindow pointer
 {
+    connect(IniByteParser::GetInstance(), &IniByteParser::ServerWaitTurn, this, &GameWindow::GameWindow_LetEnterTurn);
     connect(IniByteParser::GetInstance(), &IniByteParser::ServerSentGameState, this, &GameWindow::setRetrievedGamestate);
     connect(IniByteParser::GetInstance(), &IniByteParser::ServerSentTurnResult, this, &GameWindow::GameWindow_ProccessTurnResult);
 
@@ -18,6 +19,9 @@ GameWindow::GameWindow(QMainWindow* mainWindow, QWidget *parent) :
 
     UartTxRx::GetInstance()->sendMessage(QByteArray::fromStdString(send_get_gamestate));
     ui->setupUi(this);
+    // ui->btnRock->setDisabled(true);
+    // ui->btnScissors->setDisabled(true);
+    // ui->btnPaper->setDisabled(true);
 
 }
 
@@ -47,18 +51,27 @@ void GameWindow::GameWindow_SendTurn(std::string turn_string)
 void GameWindow::on_btnRock_clicked()
 {
     GameWindow_SendTurn("ROCK");
+    ui->btnRock->setDisabled(true);
+    ui->btnScissors->setDisabled(true);
+    ui->btnPaper->setDisabled(true);
 }
 
 
-void GameWindow::on_brnPaper_clicked()
+void GameWindow::on_btnPaper_clicked()
 {
     GameWindow_SendTurn("PAPER");
+    ui->btnRock->setDisabled(true);
+    ui->btnScissors->setDisabled(true);
+    ui->btnPaper->setDisabled(true);
 }
 
 
 void GameWindow::on_btnScissors_clicked()
 {
     GameWindow_SendTurn("SCISSORS");
+    ui->btnRock->setDisabled(true);
+    ui->btnScissors->setDisabled(true);
+    ui->btnPaper->setDisabled(true);
 }
 
 
@@ -76,7 +89,6 @@ void GameWindow::setRetrievedGamestate(GameState gamestate)
 }
 
 
-
 void GameWindow::on_btnGetInfo_clicked()
 {
     std::string ss = IniByteParser::GetInstance()->generateGetGameStateMessage();
@@ -89,6 +101,7 @@ void GameWindow::GameWindow_ProccessTurnResult(TurnResult turn_result)
     {
         // Someone had won
         QMessageBox msgBox;
+
 
         // Set the message box title and text
         msgBox.setWindowTitle("Make turn again!");
@@ -140,4 +153,16 @@ void GameWindow::GameWindow_ProccessTurnResult(TurnResult turn_result)
                            .maxRoundsAmount = turn_result.maxRoundsAmount,
                            .winner = 0};
     setRetrievedGamestate(gamestate);
+}
+
+
+// When wait turn retrieved
+void GameWindow::GameWindow_LetEnterTurn(int player)
+{
+    ui->btnRock->setDisabled(false);
+    ui->btnScissors->setDisabled(false);
+    ui->btnPaper->setDisabled(false);
+
+    QString insert_text = QString("PLAYER %1").arg(player);
+    ui->lblCurrentPlayer->setText(insert_text);
 }

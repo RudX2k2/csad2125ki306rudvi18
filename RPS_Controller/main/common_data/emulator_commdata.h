@@ -20,7 +20,7 @@ typedef struct
 } GetTurnResult_CommonData_t;
 
 typedef struct{
-    char mode[4];
+    char turn[10];
 } SetPlayerTurn_CommonData_t;
 
 #endif // EMULATOR_COMM_DATA_H

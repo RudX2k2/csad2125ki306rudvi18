@@ -28,6 +28,14 @@ typedef enum
     EMULATOR_BATTLEMODE_IDLE,
 } emulator_battlemode_enum_t;
 
+
+typedef enum
+{
+    EMULATOR_PLAYER_1 = 0,
+    EMULATOR_PLAYER_2,
+    EMULATOR_PLAYERS_AMOUNT,
+} emulator_players_enum_t;
+
 void EMULATOR_Init(void);
 
 void EMULATOR_SetGameInfo(uint8_t isLoaded, char * mode, uint16_t player1Score, uint16_t player2Score, uint16_t maxRounds);

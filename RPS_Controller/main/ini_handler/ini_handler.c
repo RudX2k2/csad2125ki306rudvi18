@@ -120,8 +120,7 @@ static void INIHANDLER_ParseTask(void *a)
 {
     ClientMessage_t client_message;
 
-    ESP_LOGW(TAG, "Data length:%d", INIHNDLR.com_buf_size);
-    ESP_LOGW(TAG, "%s", INIHNDLR.command_buf);
+    ESP_LOGW(TAG, "\n%s", INIHNDLR.command_buf);
 
     memory_buffer_t mbuf = {
         .buffer = INIHNDLR.command_buf,
@@ -148,7 +147,7 @@ static void INIHANDLER_ParseTask(void *a)
     {
         ESP_LOGI(TAG, "player_turn included");
 
-        EMULATOR_SetNewRecievedTurn(client_message.set_player_turn.turn_result.mode);
+        EMULATOR_SetNewRecievedTurn(client_message.set_player_turn.turn_result.turn);
 
         // Emualtor can proccess the turn
         EMULATOR_GiveSemIsTurnRetrieved();
@@ -231,12 +230,15 @@ static int INIHANDLER_ClientMessageParser(void *user, const char *section, const
             if (clientVal == 1)
             {
                 client_msg->set_player_turn.isIncluded = true;
-                memcpy(client_msg->set_player_turn.turn_result.mode, value, 4);
             }
             else
             {
                 client_msg->set_player_turn.isIncluded = false;
             }
+        }
+        if (MATCH("SetPlayerTurn", "Turn"))
+        {
+            memcpy(client_msg->set_player_turn.turn_result.turn, value, 10);
         }
     }
     return 1;
@@ -250,12 +252,25 @@ void INIHANDLER_SendClientGoodConfig(void)
     UARTCNTRL_SendData(message, strlen(message) + 1);
 }
 
-void INIHANDLER_SendWaitTurn(void)
+void INIHANDLER_SendWaitTurn(emulator_players_enum_t player)
 {
-    char *message = "[WaitClientTurn]\n"
-                    "Server=1"
-                    "WaitTurn=1\n";
-    UARTCNTRL_SendData(message, strlen(message) + 1);
+    int player_num = player + 1;
+    int send_waitTurnSize = snprintf(NULL, 0, "[WaitClientTurn]\n"
+                                              "Server=1\n"
+                                              "WaitTurn=1\n"
+                                              "Player=%d",
+                                     player_num);
+
+    char *send_waitTurn = (char *)malloc(send_waitTurnSize);
+
+    snprintf(send_waitTurn, send_waitTurnSize + 1, "[WaitClientTurn]\n"
+                                                   "Server=1\n"
+                                                   "WaitTurn=1\n"
+                                                   "Player=%d",
+             player_num);
+
+    UARTCNTRL_SendData(send_waitTurn, strlen(send_waitTurn) + 1);
+    free(send_waitTurn);
 }
 
 void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)

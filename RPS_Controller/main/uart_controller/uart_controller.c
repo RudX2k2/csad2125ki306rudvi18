@@ -126,6 +126,8 @@ void UARTCNTRL_SendData(char *buffer, uint32_t size)
     memcpy(UARTHNDL.tx_buffer, buffer, size);
     UARTHNDL.tx_size = size;
 
+    ESP_LOGE(TAG, "\n%.*s", (int)size+1, buffer);
+
     uart_write_bytes(UART_NUM_0, UARTHNDL.tx_buffer, UARTHNDL.tx_size);
 }
 

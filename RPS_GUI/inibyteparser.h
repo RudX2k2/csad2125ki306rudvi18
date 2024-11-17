@@ -42,7 +42,7 @@ signals:
     void ServerGoodConfig();
     void ServerSentGameState(GameState state);
     void ServerSentTurnResult(TurnResult turn_result);
-    void ServerWaitTurn();
+    void ServerWaitTurn(int player);
 
 public slots:
     void INIBYTEPARSER_ParseINIData(const QByteArray &message);

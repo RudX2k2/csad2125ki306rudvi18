@@ -23,7 +23,7 @@ private slots:
 
     void on_btnRock_clicked();
 
-    void on_brnPaper_clicked();
+    void on_btnPaper_clicked();
 
     void on_btnScissors_clicked();
 
@@ -32,7 +32,9 @@ private slots:
 private:
     Ui::GameWindow *ui;
     QWidget *mainWindow;
+    GameState current_game;
     void GameWindow_ProccessTurnResult(TurnResult turn_result);
+    void GameWindow_LetEnterTurn(int player);
 };
 
 #endif // GAMEWINDOW_H

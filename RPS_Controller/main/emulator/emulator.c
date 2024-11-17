@@ -115,7 +115,7 @@ static void EMULATOR_MainGameProccessThread(void *a)
         case EMULATOR_GAMESTATE_WAIT_PLAYER1_TURN:
         {
             ESP_LOGW(TAG, "Wait for player 1 turn...");
-            INIHANDLER_SendWaitTurn();
+            INIHANDLER_SendWaitTurn(EMULATOR_PLAYER_1);
             int err = EMULATOR_TakeSemIsTurnRetrieved();
             if (err)
             {
@@ -124,6 +124,7 @@ static void EMULATOR_MainGameProccessThread(void *a)
             else
             {
                 emulator.players_choice[EMULATOR_PLAYER_1] = emulator.recent_turn_choice;
+                ESP_LOGE(TAG, "Set player 1 turn to %d", emulator.players_choice[EMULATOR_PLAYER_1]);
 
                 switch (emulator.cur_battlemode)
                 {
@@ -146,7 +147,7 @@ static void EMULATOR_MainGameProccessThread(void *a)
         case EMULATOR_GAMESTATE_WAIT_PLAYER2_TURN:
         {
             ESP_LOGW(TAG, "Wait for player 2 turn...");
-            INIHANDLER_SendWaitTurn();
+            INIHANDLER_SendWaitTurn(EMULATOR_PLAYER_2);
             int err = EMULATOR_TakeSemIsTurnRetrieved();
             if (err)
             {
@@ -155,18 +156,15 @@ static void EMULATOR_MainGameProccessThread(void *a)
             else
             {
                 emulator.players_choice[EMULATOR_PLAYER_2] = emulator.recent_turn_choice;
+                ESP_LOGE(TAG, "Set player 2 turn to %d", emulator.players_choice[EMULATOR_PLAYER_2]);
 
                 switch (emulator.cur_battlemode)
                 {
                 case EMULATOR_BATTLEMODE_PVP:
                     emulator.game_state = EMULATOR_GAMESTATE_PROCCESS_PLAYERS_GAME;
                     break;
-                case EMULATOR_BATTLEMODE_PVE:
-                case EMULATOR_BATTLEMODE_EVE:
-                    ESP_LOGE(TAG, "Wrong battle mode");
-                    break;
                 default:
-                    ESP_LOGE(TAG, "Unknown battle mode");
+                    ESP_LOGE(TAG, "Wrong battle mode");
                     break;
                 }
             }
@@ -177,32 +175,34 @@ static void EMULATOR_MainGameProccessThread(void *a)
             GetTurnResult_CommonData_t p_result = {.winner = 0};
 
             emulator_turnresult_winner_t turn_result = EMULATOR_ChoseWinner();
-            p_result.player1 = emulator.players_score[EMULATOR_PLAYER_2];
+
+            p_result.player1 = emulator.players_score[EMULATOR_PLAYER_1];
             p_result.player2 = emulator.players_score[EMULATOR_PLAYER_2];
             memcpy(p_result.mode, EMULATOR_GetBattleModeString(emulator.cur_battlemode), 4);
             p_result.max_rounds = emulator.max_rounds;
-            INIHANDLER_GetTurnResult(p_result);
+
+            ESP_LOGW(TAG, "turn_result: %d", turn_result);
             switch (turn_result)
             {
             case EMULATOR_TURNRESULT_WINNER_GAME_FIRST:
             {
                 p_result.winner = 1;
-
                 emulator.game_state = EMULATOR_GAMESTATE_WAIT_CONFIG;
+                ESP_LOGE(TAG, "Game is ended by p1");
                 break;
             }
             case EMULATOR_TURNRESULT_WINNER_GAME_SECOND:
             {
                 p_result.winner = 2;
-
                 emulator.game_state = EMULATOR_GAMESTATE_WAIT_CONFIG;
+                ESP_LOGE(TAG, "Game is ended by p2");
                 break;
             }
             case EMULATOR_TURNRESULT_WINNER_DRAW:
             {
                 p_result.winner = 3;
-
                 emulator.game_state = EMULATOR_GAMESTATE_WAIT_CONFIG;
+                ESP_LOGE(TAG, "Game is ended by draw");
                 break;
             }
             case EMULATOR_TURNRESULT_WINNER_ROUND_FIRST:
@@ -328,9 +328,8 @@ static void EMULATOR_MainGameProccessThread(void *a)
         default:
             break;
         }
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
-
-    vTaskDelay(1 / portTICK_PERIOD_MS);
 }
 
 void EMULATOR_SetNewRecievedTurn(char *turn)
@@ -349,7 +348,7 @@ void EMULATOR_SetNewRecievedTurn(char *turn)
     }
     else
     {
-        // error
+        ESP_LOGE(TAG, "NO SUCH TURN");
     }
 }
 
@@ -428,13 +427,16 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
 {
     emulator_player_choice_enum_t p1 = emulator.players_choice[EMULATOR_PLAYER_1];
     emulator_player_choice_enum_t p2 = emulator.players_choice[EMULATOR_PLAYER_2];
+    emulator_turnresult_winner_t game_turn_result = {0};
 
-    bool is_last_round;
-    if ((emulator.players_score[EMULATOR_PLAYER_1] + emulator.players_score[EMULATOR_PLAYER_2]) + 1 >= emulator.max_rounds)
+    bool is_last_round = false;
+    if ((emulator.players_score[EMULATOR_PLAYER_1] + emulator.players_score[EMULATOR_PLAYER_2]) + 1 == emulator.max_rounds)
     {
         // if not draw then someone will win
         is_last_round = true;
+        ESP_LOGW(TAG, "This is last round!");
     }
+
     switch (p1)
     {
     case EMULATOR_ROCK:
@@ -442,22 +444,22 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
         switch (p2)
         {
         case EMULATOR_ROCK:
-            // game_turn_result = EMULATOR_TURNRESULT_DRAW;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
         case EMULATOR_PAPER:
             emulator.players_score[EMULATOR_PLAYER_2]++;
-            // game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
             break;
         case EMULATOR_SCISSORS:
             emulator.players_score[EMULATOR_PLAYER_1]++;
-            // game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
             break;
         default:
             emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
-            // game_turn_result = EMULATOR_TURNRESULT_DRAW;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             break;
         }
         break;
@@ -468,21 +470,21 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
         {
         case EMULATOR_ROCK:
             emulator.players_score[EMULATOR_PLAYER_1]++;
-            // game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
             break;
         case EMULATOR_PAPER:
-            // game_turn_result = EMULATOR_TURNRESULT_DRAW;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
         case EMULATOR_SCISSORS:
             emulator.players_score[EMULATOR_PLAYER_2]++;
-            // game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
             break;
         default:
             emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
-            // game_turn_result = EMULATOR_TURNRESULT_DRAW;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             break;
         }
         break;
@@ -493,20 +495,19 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
         {
         case EMULATOR_ROCK:
             emulator.players_score[EMULATOR_PLAYER_2]++;
-            // game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
             break;
         case EMULATOR_PAPER:
             emulator.players_score[EMULATOR_PLAYER_1]++;
-            // game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
             break;
         case EMULATOR_SCISSORS:
-            // game_turn_result = EMULATOR_TURNRESULT_DRAW;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
-
             break;
         default:
-            // game_turn_result = EMULATOR_TURNRESULT_DRAW;
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
@@ -517,16 +518,35 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
         break;
     }
 
-    if (emulator.players_score[EMULATOR_PLAYER_1] > emulator.players_score[EMULATOR_PLAYER_2])
+    // Choose the winner
+    if (is_last_round)
     {
-        return (is_last_round) ? EMULATOR_TURNRESULT_WINNER_GAME_FIRST : EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+        if (emulator.players_score[EMULATOR_PLAYER_1] > emulator.players_score[EMULATOR_PLAYER_2])
+        {
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_GAME_FIRST;
+        }
+        if (emulator.players_score[EMULATOR_PLAYER_1] < emulator.players_score[EMULATOR_PLAYER_2])
+        {
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_GAME_SECOND;
+        }
+        else
+        {
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_DRAW;
+        }
     }
-    else if (emulator.players_score[EMULATOR_PLAYER_1] < emulator.players_score[EMULATOR_PLAYER_2])
-    {
-        return (is_last_round) ? EMULATOR_TURNRESULT_WINNER_GAME_SECOND : EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
-    }
-    else
-    {
-        return (is_last_round) ? EMULATOR_TURNRESULT_WINNER_DRAW : EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
-    }
+
+    return game_turn_result;
+
+    // if (emulator.players_score[EMULATOR_PLAYER_1] > emulator.players_score[EMULATOR_PLAYER_2])
+    // {
+    //     return (is_last_round) ? EMULATOR_TURNRESULT_WINNER_GAME_FIRST : EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+    // }
+    // else if (emulator.players_score[EMULATOR_PLAYER_1] < emulator.players_score[EMULATOR_PLAYER_2])
+    // {
+    //     return (is_last_round) ? EMULATOR_TURNRESULT_WINNER_GAME_SECOND : EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
+    // }
+    // else
+    // {
+    //     return (is_last_round) ? EMULATOR_TURNRESULT_WINNER_DRAW : EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
+    // }
 }

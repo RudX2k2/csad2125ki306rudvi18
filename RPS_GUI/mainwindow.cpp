@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     uart_obj = UartTxRx::GetInstance();
-    connect(uart_obj, &UartTxRx::bufferChanged, this, &MainWindow::updateTerminal);
+    connect(uart_obj, &UartTxRx::completeMessageReceived    , this, &MainWindow::updateTerminal);
     connect(uart_obj, &UartTxRx::disconnected, this, &MainWindow::writeDisconnectedInTerminal);
     connect(IniByteParser::GetInstance(), &IniByteParser::ServerGoodConfig, this, &MainWindow::readyToGame);
 

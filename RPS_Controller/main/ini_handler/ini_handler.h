@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "../common_data/emulator_commdata.h"
+#include "../emulator/emulator.h"
 
 /// @brief Write retrieved buffer to `rx.ini` file so other functions can handle
 /// @param buffer
@@ -19,7 +20,7 @@ void INIHANDLER_PrintINI(const char *filename);
 
 // ------------------------- Send data to client ---------------------------
 
-void INIHANDLER_SendWaitTurn(void);
+void INIHANDLER_SendWaitTurn(emulator_players_enum_t player);
 
 void INIHANDLER_SendClientGoodConfig(void);
 
