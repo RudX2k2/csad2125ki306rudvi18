@@ -1,18 +1,18 @@
 #ifndef INI_HANDLER_PRIVATE_H
 #define INI_HANDLER_PRIVATE_H
 
-#include <stdio.h>
 #include <string.h>
-
 #include "ini_handler.h"
-
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+
 #include "iniparser/ini.h"
 #include "../uart_controller/uart_controller.h"
 #include "../emulator/emulator.h"
+#include "../common_data/emulator_commdata.h"
+#include "../uart_controller/uart_controller.h"
 
 #define INIFILE_SIZE 512
 
@@ -34,38 +34,30 @@ typedef struct
     size_t com_buf_size;
 } INIHNDLR_t;
 
-// [Client]
-// [GameState]
-// Retrieve=1
-// Mode=
-// Player1=
-// Player2=
-// MaxRounds=
-
 // Structure for game settings
 typedef struct
 {
     bool isIncluded;
-    uint8_t isGameToLoad : 1;
-    char mode[4]; // PVP, PVE, EVE
-    uint16_t player1_score;
-    uint16_t player2_score;
-    uint8_t maxRoundsAmount;
-} ClientMsg_GameState_t;
-
+    bool isLoaded : 1;
+    GameState_CommonData_t gamestate;
+} ClientMsg_SetGameConfig_t;
 
 typedef struct
 {
     bool isIncluded;
-    uint8_t Player_no;
-    char choice[10];
-} ClientMsg_PlayerTurn;
+} ClientMsg_GetGameState_t;
 
 typedef struct
 {
-    bool client_found;
-    ClientMsg_GameState_t game_state;
-    ClientMsg_PlayerTurn player_turn;
+    bool isIncluded;
+    SetPlayerTurn_CommonData_t turn_result;
+} ClientMsg_SetPlayerTurn_t;
+
+typedef struct
+{
+    ClientMsg_SetPlayerTurn_t set_player_turn;
+    ClientMsg_SetGameConfig_t set_gameconfig;
+    ClientMsg_GetGameState_t get_gamestate;
 } ClientMessage_t;
 
 static void INIHANDLER_ParseTask(void *a);

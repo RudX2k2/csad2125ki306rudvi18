@@ -7,18 +7,9 @@
 #include "UartTxRx.h"
 #include <QObject>
 
-struct GameState {
-    int isLoaded;
-    std::string mode;           // PVP, PVE, EVE
-    int player1Score;
-    int player2Score;
-    int maxRoundsAmount;
-};
+#include "CommonDataTypes.h"
 
-struct ClientGameTurn {
-    int player;
-    std::string choice;
-};
+
 
 class IniByteParser : public QObject {
     Q_OBJECT
@@ -37,14 +28,21 @@ public:
         {"PVE", "Player vs AI"},
         {"EVE", "AI vs AI"}
     };
+
     const std::vector<std::string> ValidTurns = {
-        "Rock", "Paper", "Scissors"
+        "ROCK", "PAPER", "SCISSORS"
     };
 
     // Parsing methods
-    std::string generateGameStateMessage(const GameState& state);
-    std::string generateClientGameTurn(const ClientGameTurn& turn);
+    std::string generateSetGameStateMessage(const GameState& state);
+    std::string generateSetPlayerTurn(const ClientGameTurn& turn);
     GameState parseGameState(const std::string& iniData);
+    std::string generateGetGameStateMessage();
+signals:
+    void ServerGoodConfig();
+    void ServerSentGameState(GameState state);
+    void ServerSentTurnResult(TurnResult turn_result);
+    void ServerWaitTurn();
 
 public slots:
     void INIBYTEPARSER_ParseINIData(const QByteArray &message);

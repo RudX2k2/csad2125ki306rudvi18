@@ -26,9 +26,9 @@ int IniByteParser::getValueInt(const std::string& section, const std::string& ke
 
 
 
-std::string IniByteParser::generateGameStateMessage(const GameState& state) {
+std::string IniByteParser::generateSetGameStateMessage(const GameState& state) {
     std::stringstream ss;
-    ss << "[GameState]\n"
+    ss << "[SetGameConfig]\n"
        << "Client=1\n"
        << "IsLoaded=" << state.isLoaded << "\n\n"
        << "Mode=" << state.mode << "\n"
@@ -39,11 +39,18 @@ std::string IniByteParser::generateGameStateMessage(const GameState& state) {
 }
 
 
-std::string IniByteParser::generateClientGameTurn(const ClientGameTurn& turn) {
+std::string IniByteParser::generateGetGameStateMessage() {
     std::stringstream ss;
-    ss << "[PlayerTurn]\n"
+    ss << "[GetGameState]\n"
+       << "Client=1\n";
+    return ss.str();
+}
+
+
+std::string IniByteParser::generateSetPlayerTurn(const ClientGameTurn& turn) {
+    std::stringstream ss;
+    ss << "[SetPlayerTurn]\n"
        << "Client=1\n"
-       << "Player=" << turn.player << "\n"
        << "Turn=" << turn.choice << "\n";
     return ss.str();
 }
@@ -62,40 +69,63 @@ GameState IniByteParser::parseGameState(const std::string& iniData) {
 
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     parseFromString(message.toStdString());
-
     // Parse the INI data
     std::string mode, player1, player2, maxRounds, gameMode, isLoaded, player, turn;
     int retrieve, playerTurn;
 
-    if(ini.GetSectionSize("ClientTurn") > 0)
+    if(ini.GetSectionSize("GetConfigResult") > 0)
     {
-        qDebug() << "Found ClientTurn!";
+        qDebug() << "Got config: \n" << qPrintable(message) << "\n";
+        int getConfigResult_serverIncluded = (QString::fromUtf8(ini.GetValue("GetConfigResult", "Server", "0"))).toInt();
+        if(getConfigResult_serverIncluded == 1)
+        {
+            int getConfigResult_result = (QString::fromUtf8(ini.GetValue("GetConfigResult", "Result", "0"))).toInt();
+
+            if(getConfigResult_result == 1)
+            {
+                qDebug() << "Got GetConfigResult Result=1. Good";
+                emit ServerGoodConfig();
+            }
+            else{
+                // send that need to resend data
+                qDebug() << "Got GetConfigResult Result=0. Bad";
+            }
+        }
     }
-
-    // if (ini.GetSectionSize("Server") > 0) {
-    //     qDebug() << "Found server!";
-    //     // [GameState] section
-    //     retrieve = ini.GetLongValue("GameState", "Retrieve", 0);
-    //     mode = ini.GetValue("GameState", "Mode", "");
-    //     player1 = ini.GetValue("GameState", "Player1", "");
-    //     player2 = ini.GetValue("GameState", "Player2", "");
-    //     maxRounds = ini.GetValue("GameState", "MaxRounds", "");
-
-    //     // [PlayerTurn] section
-    //     playerTurn = ini.GetLongValue("PlayerTurn", "Player", 0);
-    //     turn = ini.GetValue("PlayerTurn", "Turn", "");
-
-    //     qDebug() << "GameState:";
-    //     qDebug() << "  Retrieve:" << retrieve;
-    //     qDebug() << "  Mode:" << mode.c_str();
-    //     qDebug() << "  Player1:" << player1.c_str();
-    //     qDebug() << "  Player2:" << player2.c_str();
-    //     qDebug() << "  MaxRounds:" << maxRounds.c_str();
-
-    //     qDebug() << "PlayerTurn:";
-    //     qDebug() << "  Player:" << playerTurn;
-    //     qDebug() << "  Turn:" << turn.c_str();
-    // }
-
-
+    if(ini.GetSectionSize("GetGameState") > 0)
+    {
+        int isServerMsg = (QString::fromUtf8(ini.GetValue("GetGameState","Server", 0))).toInt();
+        if(isServerMsg == 1)
+        {
+            GameState result_gamestate;
+            result_gamestate.player1Score = (QString::fromUtf8(ini.GetValue("GetGameState","Player1", 0))).toInt();
+            result_gamestate.player2Score = (QString::fromUtf8(ini.GetValue("GetGameState","Player2", 0))).toInt();
+            result_gamestate.mode = ini.GetValue("GetGameState","Mode", 0);
+            result_gamestate.maxRoundsAmount = (QString::fromUtf8(ini.GetValue("GetGameState","MaxRounds", 0))).toInt();
+            result_gamestate.winner = (QString::fromUtf8(ini.GetValue("GetGameState","Winner", 0))).toInt();
+            emit ServerSentGameState(result_gamestate);
+        }
+    }
+    if(ini.GetSectionSize("GetTurnResult") > 0)
+    {
+        int isServerMsg = (QString::fromUtf8(ini.GetValue("GetTurnResult","Server", 0))).toInt();
+        if(isServerMsg == 1)
+        {
+            TurnResult get_turnresult;
+            get_turnresult.player1Score = (QString::fromUtf8(ini.GetValue("GetTurnResult","Player1", 0))).toInt();
+            get_turnresult.player2Score = (QString::fromUtf8(ini.GetValue("GetTurnResult","Player2", 0))).toInt();
+            get_turnresult.mode = ini.GetValue("GetTurnResult","Mode", 0);
+            get_turnresult.maxRoundsAmount = (QString::fromUtf8(ini.GetValue("GetTurnResult","MaxRounds", 0))).toInt();
+            get_turnresult.winner = (QString::fromUtf8(ini.GetValue("GetTurnResult","Winner", 0))).toInt();
+            emit ServerSentTurnResult(get_turnresult);
+        }
+    }
+    if(ini.GetSectionSize("WaitClientTurn") > 0)
+    {
+        int isServerMsg = (QString::fromUtf8(ini.GetValue("WaitClientTurn","Server", 0))).toInt();
+        if(isServerMsg == 1)
+        {
+            emit ServerWaitTurn();
+        }
+    }
 }

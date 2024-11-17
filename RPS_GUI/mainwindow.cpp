@@ -13,7 +13,6 @@
 UartTxRx * uart_obj;
 QString port_name;
 
-
 void MainWindow::writeDisconnectedInTerminal()
 {
     qDebug() << "Disconnected";
@@ -25,13 +24,13 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , gameWindow(nullptr)
 {
-    IniByteParser* iniparser = IniByteParser::GetInstance();
-
     ui->setupUi(this);
 
     uart_obj = UartTxRx::GetInstance();
     connect(uart_obj, &UartTxRx::bufferChanged, this, &MainWindow::updateTerminal);
     connect(uart_obj, &UartTxRx::disconnected, this, &MainWindow::writeDisconnectedInTerminal);
+    connect(IniByteParser::GetInstance(), &IniByteParser::ServerGoodConfig, this, &MainWindow::readyToGame);
+
     ui->btnGoPlay->setDisabled(true);
 
     const auto availablePorts = QSerialPortInfo::availablePorts();
@@ -55,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->cBoxRoundAmount->addItem(add_item);
     }
 
-    for(auto it = iniparser->GameModes.begin(); it != iniparser->GameModes.end(); it++)
+    for(auto it = IniByteParser::GetInstance()->GameModes.begin(); it != IniByteParser::GetInstance()->GameModes.end(); it++)
     {
         ui->cBoxGameMode->addItem(QString::fromStdString(it->first));
     }
@@ -171,8 +170,7 @@ void MainWindow::on_btnGoPlay_clicked()
     };
 
     // Use the parser to generate INI message
-    IniByteParser * parser = IniByteParser::GetInstance();
-    std::string iniMessage = parser->generateGameStateMessage(game_state);
+    std::string iniMessage = IniByteParser::GetInstance()->generateSetGameStateMessage(game_state);
 
     // Send the message via UART
     int ret = uart_obj->sendMessage(QByteArray::fromStdString(iniMessage));
@@ -180,10 +178,9 @@ void MainWindow::on_btnGoPlay_clicked()
         QMessageBox::critical(this, "Error", "Failed to send game settings to server");
         return;
     }
+}
 
-
-
-
+void MainWindow::readyToGame(){
     // Create and show game window only if message was sent successfully
     if (!gameWindow) {
         gameWindow = new GameWindow(this, nullptr);
@@ -194,11 +191,13 @@ void MainWindow::on_btnGoPlay_clicked()
     }
 
     // Hide main window and show game window
+    qDebug() << "ready to game\n";
     this->hide();
     gameWindow->show();
+}
 
-    // Optionally, log the sent configuration
-    // qDebug() << "Sent game settings to server:";
-    // qDebug() << "Message:\n" << QString::fromStdString(iniMessage);
+void MainWindow::on_btnLoadGame_clicked()
+{
+
 }
 

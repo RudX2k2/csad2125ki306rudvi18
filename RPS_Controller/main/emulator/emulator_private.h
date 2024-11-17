@@ -5,14 +5,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
+#include <time.h>
 
-typedef enum
-{
-    EMULATOR_BATTLEMODE_PVP = 0,
-    EMULATOR_BATTLEMODE_PVE,
-    EMULATOR_BATTLEMODE_EVE,
-    EMULATOR_BATTLEMODE_IDLE,
-} emulator_battlemode_enum_t;
 
 typedef enum
 {
@@ -38,16 +32,19 @@ typedef enum
     EMULATOR_GAMESTATE_SHOW_WINNER,
 } emulator_gamestate_enum_t;
 
+
 typedef struct
 {
     emulator_gamestate_enum_t game_state;
+    uint8_t isLoaded : 1;
     emulator_battlemode_enum_t cur_battlemode;
+    uint8_t players_score[EMULATOR_PLAYERS_AMOUNT];
+    uint16_t max_rounds;
+
     emulator_player_type_enum_t players_type[EMULATOR_PLAYERS_AMOUNT];
     emulator_player_choice_enum_t players_choice[EMULATOR_PLAYERS_AMOUNT];
     emulator_player_choice_enum_t recent_turn_choice;
-    uint16_t max_rounds;
-    uint8_t isLoaded : 1;
-
+    emulator_players_enum_t winner;
 } emulator_t;
 
 static void EMULATOR_MainGameProccessThread(void *a);

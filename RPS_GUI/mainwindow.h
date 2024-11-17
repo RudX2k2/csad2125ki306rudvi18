@@ -34,6 +34,10 @@ private slots:
 
     void on_btnGoPlay_clicked();
 
+    void readyToGame();
+
+    void on_btnLoadGame_clicked();
+
 private:
     Ui::MainWindow *ui;
     GameWindow *gameWindow;
