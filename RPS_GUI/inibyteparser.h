@@ -6,6 +6,7 @@
 #include "SimpleIni.h"
 #include "UartTxRx.h"
 #include <QObject>
+#include <QMutex>
 
 #include "CommonDataTypes.h"
 
@@ -36,18 +37,19 @@ public:
     // Parsing methods
     std::string generateSetGameStateMessage(const GameState& state);
     std::string generateSetPlayerTurn(const ClientGameTurn& turn);
-    GameState parseGameState(const std::string& iniData);
     std::string generateGetGameStateMessage();
+    GameState parseGameState(const std::string& iniData);
 signals:
     void ServerGoodConfig();
     void ServerSentGameState(GameState state);
-    void ServerSentTurnResult(TurnResult turn_result);
+    void ServerSentTurnResult(GameState turn_result);
     void ServerWaitTurn(int player);
 
 public slots:
     void INIBYTEPARSER_ParseINIData(const QByteArray &message);
 
 private:
+    QMutex iniMutex;
     IniByteParser();
     IniByteParser(const IniByteParser&) = delete;
     IniByteParser& operator=(const IniByteParser&) = delete;

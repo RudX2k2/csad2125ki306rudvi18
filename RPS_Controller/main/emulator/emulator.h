@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include "../common_data/emulator_commdata.h"
 
-typedef enum{
+typedef enum
+{
     EMULATOR_ROCK = 0,
     EMULATOR_PAPER,
     EMULATOR_SCISSORS,
@@ -20,6 +21,7 @@ typedef enum
     EMULATOR_TURNRESULT_WINNER_GAME_SECOND,
 } emulator_turnresult_winner_t;
 
+
 typedef enum
 {
     EMULATOR_BATTLEMODE_PVP = 0,
@@ -27,7 +29,6 @@ typedef enum
     EMULATOR_BATTLEMODE_EVE,
     EMULATOR_BATTLEMODE_IDLE,
 } emulator_battlemode_enum_t;
-
 
 typedef enum
 {
@@ -38,7 +39,7 @@ typedef enum
 
 void EMULATOR_Init(void);
 
-void EMULATOR_SetGameInfo(uint8_t isLoaded, char * mode, uint16_t player1Score, uint16_t player2Score, uint16_t maxRounds);
+void EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, uint16_t player1Score, uint16_t player2Score, uint16_t maxRounds);
 
 GameState_CommonData_t EMULATOR_GetGameState(void);
 
@@ -50,10 +51,9 @@ void EMULATOR_GiveSemIsStateRetrieved(void);
 
 int EMULATOR_TakeSemIsStateRetrieved(void);
 
-void EMULATOR_SetNewRecievedTurn(char * turn);
+void EMULATOR_SetNewRecievedTurn(char *turn);
 
 void EMULATOR_StartGame(void);
-
 
 /// @brief Takes singleton `emulator.player_choice` values and add score for the winner in `emulator.players_score`.
 /// @return Result of the turn. Is it was last, and someone win - draw

@@ -52,26 +52,6 @@ void UARTCNTRL_Init(void)
     // xSemaphoreGive(parseDataUartSemaphore);
 }
 
-static void UARTCNTRL_NewDataCounterTask(void *a)
-{
-    bool should_run_count = true;
-    while (should_run_count)
-    {
-        if (--UARTHNDL.new_data_counter <= 0)
-        {
-            should_run_count = false;
-            ESP_LOGW(TAG, "Finnaly parse data: %s", UARTHNDL.rx_buffer);
-            INIHANDLER_ParseCommand((char *)UARTHNDL.rx_buffer, UARTHNDL.rx_size);
-            memset(UARTHNDL.rx_buffer, 0, RX_BUF_SIZE);
-            UARTHNDL.written_tx_len = 0;
-            UARTHNDL.is_new_data_collecting = false;
-            vTaskDelete(NULL);
-        }
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
-}
-
-
 
 static void UARTCNTRL_RX_Task(void *a)
 {
@@ -126,13 +106,13 @@ void UARTCNTRL_SendData(char *buffer, uint32_t size)
     memcpy(UARTHNDL.tx_buffer, buffer, size);
     UARTHNDL.tx_size = size;
 
-    ESP_LOGE(TAG, "\n%.*s", (int)size+1, buffer);
+    ESP_LOGE(TAG, "ControllerData:%.*s", (int)size+1, buffer);
 
     uart_write_bytes(UART_NUM_0, UARTHNDL.tx_buffer, UARTHNDL.tx_size);
 }
 
 void UARTCNTRL_EnableRXDataPolling(void)
 {
-    ESP_LOGI(TAG, "Enable rx polling");
+    // ESP_LOGI(TAG, "Enable rx polling");
     xTaskCreate(UARTCNTRL_RX_Task, "uart_rx_task", INIHANDLER_SENDDATA_STASKSIZE, NULL, configMAX_PRIORITIES - 1, NULL);
 }

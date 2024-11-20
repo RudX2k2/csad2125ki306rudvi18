@@ -12,14 +12,6 @@ struct GameState {
     int winner;
 };
 
-struct TurnResult {
-    std::string mode;           // PVP, PVE, EVE
-    int player1Score;
-    int player2Score;
-    int maxRoundsAmount;
-    int winner;
-};
-
 struct ClientGameTurn {
     std::string choice;
 };

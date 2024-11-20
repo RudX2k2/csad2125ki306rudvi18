@@ -16,7 +16,7 @@ public:
     explicit GameWindow(QMainWindow* mainWindow, QWidget *parent = nullptr);  // Modified constructor
     ~GameWindow();
     void GameWindow_SendTurn(std::string turn_string);
-    void setRetrievedGamestate(GameState gamestate);
+    void GameWindow_UpdateStatusLabel(GameState gamestate);
 
 private slots:
     void on_btnGoBack_clicked();
@@ -33,7 +33,7 @@ private:
     Ui::GameWindow *ui;
     QWidget *mainWindow;
     GameState current_game;
-    void GameWindow_ProccessTurnResult(TurnResult turn_result);
+    void GameWindow_ProccessTurnResult(GameState turn_result);
     void GameWindow_LetEnterTurn(int player);
 };
 

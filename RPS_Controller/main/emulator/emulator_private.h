@@ -23,7 +23,7 @@ typedef enum
     EMULATOR_GAMESTATE_PROCCESS_PLAYERS_GAME,
     EMULATOR_GAMESTATE_PROCCESS_PLAYERBOT_GAME,
     EMULATOR_GAMESTATE_PROCCESS_BOTS_GAME,
-    EMULATOR_GAMESTATE_SHOW_WINNER,
+    EMULATOR_GAMESTATE_CLEAN_GAME,
 } emulator_gamestate_enum_t;
 
 
@@ -39,7 +39,18 @@ typedef struct
     emulator_player_choice_enum_t players_choice[EMULATOR_PLAYERS_AMOUNT];
     volatile emulator_player_choice_enum_t recent_turn_choice;
     volatile emulator_players_enum_t winner;
+    volatile uint8_t current_round;
 } emulator_t;
+
+static char emulator_turnresult_winner_strings[][20] =
+    {
+        "ROUND_WINNER_FIRST",
+        "ROUND_WINNER_SECOND",
+        "ROUND_WINNER_DRAW",
+        "WINNER_DRAW",
+        "WINNER_FIRST",
+        "WINNER_SECOND",
+};
 
 static void EMULATOR_MainGameProccessThread(void *a);
 

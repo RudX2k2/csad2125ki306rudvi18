@@ -17,13 +17,12 @@ private:
     GameState current_gamestate;
 
 signals:
-
+    void GameData_GameStateUpdated(GameState gamestate);
 
 public:
-    static void GameData_SetGameState(GameState set_gamestate);
+    void GameData_SetGameState(GameState set_gamestate);
     static GameData* getInstance(QObject* parent = nullptr);
     GameState getCurrentGameState();
-    void setCurrentGameState(GameState gamestate);
     // Add your game data methods and properties here
 };
 

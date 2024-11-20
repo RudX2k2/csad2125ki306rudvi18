@@ -120,7 +120,7 @@ static void INIHANDLER_ParseTask(void *a)
 {
     ClientMessage_t client_message;
 
-    ESP_LOGW(TAG, "\n%s", INIHNDLR.command_buf);
+    // ESP_LOGW(TAG, "\n%s", INIHNDLR.command_buf);
 
     memory_buffer_t mbuf = {
         .buffer = INIHNDLR.command_buf,
@@ -140,12 +140,12 @@ static void INIHANDLER_ParseTask(void *a)
     if (client_message.get_gamestate.isIncluded)
     {
         GameState_CommonData_t send_gamestate = EMULATOR_GetGameState();
-        ESP_LOGI(TAG, "Get gamestate request");
+        // ESP_LOGI(TAG, "Get gamestate request");
         INIHANDLER_GetGameState(send_gamestate);
     }
     if (client_message.set_player_turn.isIncluded)
     {
-        ESP_LOGI(TAG, "player_turn included");
+        // ESP_LOGI(TAG, "player_turn included");
 
         EMULATOR_SetNewRecievedTurn(client_message.set_player_turn.turn_result.turn);
 
@@ -275,6 +275,7 @@ void INIHANDLER_SendWaitTurn(emulator_players_enum_t player)
 
 void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)
 {
+    ESP_LOGW(TAG, "Send turn result to client");
     int get_turnResult_size = snprintf(NULL, 0, "[GetTurnResult]\n"
                                                 "Server=1\n"
                                                 "Mode=%s\n"

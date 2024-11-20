@@ -7,7 +7,7 @@
 IniByteParser::IniByteParser() {
     ini.SetUnicode();
     uart_ini_obj = UartTxRx::GetInstance();
-    QObject::connect(uart_ini_obj, &UartTxRx::bufferChanged, this, &IniByteParser::INIBYTEPARSER_ParseINIData);
+    QObject::connect(uart_ini_obj, &UartTxRx::completeMessageReceived, this, &IniByteParser::INIBYTEPARSER_ParseINIData);
 }
 
 bool IniByteParser::parseFromString(const std::string& data) {
@@ -68,14 +68,36 @@ GameState IniByteParser::parseGameState(const std::string& iniData) {
 
 
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
+    // QMutexLocker locker(&iniMutex); // Lock the mutex for the duration of this function
+    qDebug() << "INI parse:\n" << QString(message) << "\n";
     parseFromString(message.toStdString());
+    CSimpleIniA::TNamesDepend sections;
+    ini.GetAllSections(sections);
+    for (const auto& section : sections) {
+        qDebug() << "[Section:" << section.pItem << "]";
+
+        // Iterate through all keys in the section
+        CSimpleIniA::TNamesDepend keys;
+        ini.GetAllKeys(section.pItem, keys);
+        for (const auto& key : keys) {
+            const char* value = ini.GetValue(section.pItem, key.pItem, "Default");
+            qDebug() << " " << key.pItem << "=" << value;
+        }
+    }
+
+    // if (ini.GetSectionSize("GetTurnResult") > 0) {
+    //     qDebug() << "Section 'GetTurnResult' found";
+    //     qDebug() << "Server:" << QString::fromUtf8(ini.GetValue("GetTurnResult", "Server", 0));
+    // } else {
+    //     qDebug() << "Section 'GetTurnResult' not found in message.";
+    // }
+
     // Parse the INI data
     std::string mode, player1, player2, maxRounds, gameMode, isLoaded, player, turn;
     int retrieve, playerTurn;
 
     if(ini.GetSectionSize("GetConfigResult") > 0)
     {
-        qDebug() << "Got config: \n" << qPrintable(message) << "\n";
         int getConfigResult_serverIncluded = (QString::fromUtf8(ini.GetValue("GetConfigResult", "Server", "0"))).toInt();
         if(getConfigResult_serverIncluded == 1)
         {
@@ -83,12 +105,7 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
 
             if(getConfigResult_result == 1)
             {
-                qDebug() << "Got GetConfigResult Result=1. Good";
                 emit ServerGoodConfig();
-            }
-            else{
-                // send that need to resend data
-                qDebug() << "Got GetConfigResult Result=0. Bad";
             }
         }
     }
@@ -108,26 +125,30 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     }
     if(ini.GetSectionSize("GetTurnResult") > 0)
     {
+        qDebug() << "TURN RESULT";
         int isServerMsg = (QString::fromUtf8(ini.GetValue("GetTurnResult","Server", 0))).toInt();
         if(isServerMsg == 1)
         {
-            TurnResult get_turnresult;
+            GameState get_turnresult;
             get_turnresult.player1Score = (QString::fromUtf8(ini.GetValue("GetTurnResult","Player1", 0))).toInt();
             get_turnresult.player2Score = (QString::fromUtf8(ini.GetValue("GetTurnResult","Player2", 0))).toInt();
             get_turnresult.mode = ini.GetValue("GetTurnResult","Mode", 0);
             get_turnresult.maxRoundsAmount = (QString::fromUtf8(ini.GetValue("GetTurnResult","MaxRounds", 0))).toInt();
             get_turnresult.winner = (QString::fromUtf8(ini.GetValue("GetTurnResult","Winner", 0))).toInt();
+
+            get_turnresult.isLoaded = 99;
             emit ServerSentTurnResult(get_turnresult);
         }
     }
-    if(ini.GetSectionSize("WaitClientTurn") > 0)
+    if (ini.GetSectionSize("WaitClientTurn") > 0)
     {
-        int isServerMsg = (QString::fromUtf8(ini.GetValue("WaitClientTurn","Server", 0))).toInt();
-        if(isServerMsg == 1)
+        int isServerMsg = (QString::fromUtf8(ini.GetValue("WaitClientTurn", "Server", 0))).toInt();
+        if (isServerMsg == 1)
         {
-            int player_to_wait_turn = (QString::fromUtf8(ini.GetValue("WaitClientTurn","Player", 0))).toInt();
-
+            int player_to_wait_turn = (QString::fromUtf8(ini.GetValue("WaitClientTurn", "Player", 0))).toInt();
+            qDebug() << "Emit server wait turn";
             emit ServerWaitTurn(player_to_wait_turn);
         }
     }
+    ini.Reset();
 }

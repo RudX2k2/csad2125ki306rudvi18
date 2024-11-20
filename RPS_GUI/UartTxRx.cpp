@@ -67,6 +67,7 @@ void UartTxRx::checkForMoreData()
         if (moreData.size() > 0) {
             if (rxBuffer.size() + moreData.size() < RX_BUF_SIZE) {
                 rxBuffer.append(moreData);
+                qDebug() << "Complete data received:" << QString(rxBuffer);
                 emit bufferChanged(rxBuffer);
                 emptyReadsCount = 0;  // Reset counter as we got data
                 return;
@@ -85,6 +86,7 @@ void UartTxRx::processCompleteMessage()
 {
     if (rxBuffer.size() > 0) {
         rx_data = rxBuffer;  // Update rx_data to maintain compatibility
+        qDebug() << "Emitting completeMessageReceived with data:" << QString(rxBuffer);
         emit completeMessageReceived(rxBuffer);
         resetBuffer();
     }

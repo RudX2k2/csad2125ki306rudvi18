@@ -31,7 +31,7 @@ set(PROJECT_SOURCES
     gamedata.h
     inibyteparser.h
     inibyteparser.cpp
-    appka.ui
+
 )
 
 # Define the UartTxRx library

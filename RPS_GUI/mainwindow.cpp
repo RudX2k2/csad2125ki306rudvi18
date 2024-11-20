@@ -9,6 +9,7 @@
 #include <QThread>
 #include "gamewindow.h"
 #include "inibyteparser.h"
+#include "gamedata.h"
 
 UartTxRx * uart_obj;
 QString port_name;
@@ -24,10 +25,13 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , gameWindow(nullptr)
 {
+    // Create get_instance singleton
+    GameData::getInstance()->getCurrentGameState();
+    uart_obj = UartTxRx::GetInstance();
+
     ui->setupUi(this);
 
-    uart_obj = UartTxRx::GetInstance();
-    connect(uart_obj, &UartTxRx::completeMessageReceived    , this, &MainWindow::updateTerminal);
+    connect(uart_obj, &UartTxRx::completeMessageReceived, this, &MainWindow::updateTerminal);
     connect(uart_obj, &UartTxRx::disconnected, this, &MainWindow::writeDisconnectedInTerminal);
     connect(IniByteParser::GetInstance(), &IniByteParser::ServerGoodConfig, this, &MainWindow::readyToGame);
 
@@ -167,8 +171,10 @@ void MainWindow::on_btnGoPlay_clicked()
         .player1Score = 0,
         .player2Score = 0,
         .maxRoundsAmount = ui->cBoxRoundAmount->currentText().toInt(),
+        .winner = 0,
     };
 
+    GameData::getInstance()->GameData_SetGameState(game_state);
     // Use the parser to generate INI message
     std::string iniMessage = IniByteParser::GetInstance()->generateSetGameStateMessage(game_state);
 
@@ -190,9 +196,8 @@ void MainWindow::readyToGame(){
         });
     }
 
-    // Hide main window and show game window
-    qDebug() << "ready to game\n";
-    this->hide();
+        // Hide main window and show game window
+        this->hide();
     gameWindow->show();
 }
 
