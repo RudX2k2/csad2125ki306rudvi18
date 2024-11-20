@@ -86,7 +86,6 @@ void UartTxRx::processCompleteMessage()
 {
     if (rxBuffer.size() > 0) {
         rx_data = rxBuffer;  // Update rx_data to maintain compatibility
-        qDebug() << "Emitting completeMessageReceived with data:" << QString(rxBuffer);
         emit completeMessageReceived(rxBuffer);
         resetBuffer();
     }

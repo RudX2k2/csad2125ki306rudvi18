@@ -15,8 +15,11 @@ typedef struct
     char mode[4];
     int player1;
     int player2;
+    int cur_round;
     int max_rounds;
     int winner;
+    char choice_p1[9];
+    char choice_p2[9];
 } GetTurnResult_CommonData_t;
 
 typedef struct{

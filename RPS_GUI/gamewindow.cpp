@@ -4,6 +4,9 @@
 #include "UartTxRx.h"
 #include <QDebug>
 #include "gamedata.h"
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
 
 
 GameWindow::GameWindow(QMainWindow* mainWindow, QWidget *parent) :
@@ -79,14 +82,24 @@ void GameWindow::on_btnScissors_clicked()
 
 void GameWindow::GameWindow_UpdateStatusLabel(GameState gamestate)
 {
+    qDebug() << "P1 choice: " << QString::fromStdString(gamestate.choiceP1);
+    qDebug() << "P2 choice: " << QString::fromStdString(gamestate.choiceP2);
+
+
     QString gamestate_text = QString("Mode: %1\n"
                                      "Player 1 score: %2\n"
                                      "Player 2 score: %3\n"
-                                     "Max rounds: %4\n")
+                                     "Current round: %4\n"
+                                     "Max rounds: %5\n"
+                                     "Player 1 choice: %6\n"
+                                     "Player 2 choice: %7\n")
                                  .arg(QString::fromStdString(gamestate.mode))  // Convert std::string to QString
                                  .arg(gamestate.player1Score)
                                  .arg(gamestate.player2Score)
-                                 .arg(gamestate.maxRoundsAmount);
+                                 .arg(gamestate.curRound)
+                                 .arg(gamestate.maxRoundsAmount)
+                                 .arg(QString::fromStdString(gamestate.choiceP1))
+                                 .arg(QString::fromStdString(gamestate.choiceP2));
 
     ui->lblGameInfo->setText(gamestate_text);
 }
@@ -229,5 +242,40 @@ void GameWindow::GameWindow_LetEnterTurn(int player)
         ui->btnScissors->setDisabled(false);
         ui->btnPaper->setDisabled(false);
     }
+}
+
+
+void GameWindow::on_btnSaveGame_clicked()
+{
+    GameState gameState = GameData::getInstance()->getCurrentGameState();
+    // Open a file save dialog to select the location to save the file
+    QString fileName = QFileDialog::getSaveFileName(this, "Save Game", "", "INI Files (*.ini)");
+    if (fileName.isEmpty()) {
+        return; // User canceled the dialog
+    }
+
+    // Open the file for writing
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        qWarning("Could not open file for writing.");
+        return;
+    }
+
+    // Write data in .ini format
+    QTextStream out(&file);
+    out << "[GameState]\n";
+    out << "Mode=" << QString::fromStdString(gameState.mode) << "\n";
+    out << "Player1Score=" << gameState.player1Score << "\n";
+    out << "Player2Score=" << gameState.player2Score << "\n";
+    out << "CurrentRound=" << gameState.curRound << "\n";
+    out << "MaxRoundsAmount=" << gameState.maxRoundsAmount << "\n";
+    out << "Winner=" << gameState.winner << "\n";
+    out << "ChoiceP1=" << QString::fromStdString(gameState.choiceP1) << "\n";
+    out << "ChoiceP2=" << QString::fromStdString(gameState.choiceP2) << "\n";
+
+    file.close();
+
+    // Notify the user that the game has been saved
+    QMessageBox::information(this, "Save Game", "Game state saved successfully!");
 }
 

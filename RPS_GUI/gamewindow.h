@@ -29,6 +29,8 @@ private slots:
 
     void on_btnGetInfo_clicked();
 
+    void on_btnSaveGame_clicked();
+
 private:
     Ui::GameWindow *ui;
     QWidget *mainWindow;

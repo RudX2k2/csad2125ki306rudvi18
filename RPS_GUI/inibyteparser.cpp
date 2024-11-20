@@ -69,21 +69,21 @@ GameState IniByteParser::parseGameState(const std::string& iniData) {
 
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     // QMutexLocker locker(&iniMutex); // Lock the mutex for the duration of this function
-    qDebug() << "INI parse:\n" << QString(message) << "\n";
+    // qDebug() << "INI parse:\n" << QString(message) << "\n";
     parseFromString(message.toStdString());
-    CSimpleIniA::TNamesDepend sections;
-    ini.GetAllSections(sections);
-    for (const auto& section : sections) {
-        qDebug() << "[Section:" << section.pItem << "]";
+    // CSimpleIniA::TNamesDepend sections;
+    // ini.GetAllSections(sections);
+    // for (const auto& section : sections) {
+    //     qDebug() << "[Section:" << section.pItem << "]";
 
-        // Iterate through all keys in the section
-        CSimpleIniA::TNamesDepend keys;
-        ini.GetAllKeys(section.pItem, keys);
-        for (const auto& key : keys) {
-            const char* value = ini.GetValue(section.pItem, key.pItem, "Default");
-            qDebug() << " " << key.pItem << "=" << value;
-        }
-    }
+    //     // Iterate through all keys in the section
+    //     CSimpleIniA::TNamesDepend keys;
+    //     ini.GetAllKeys(section.pItem, keys);
+    //     for (const auto& key : keys) {
+    //         const char* value = ini.GetValue(section.pItem, key.pItem, "Default");
+    //         qDebug() << " " << key.pItem << "=" << value;
+    //     }
+    // }
 
     // if (ini.GetSectionSize("GetTurnResult") > 0) {
     //     qDebug() << "Section 'GetTurnResult' found";
@@ -132,10 +132,12 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
             GameState get_turnresult;
             get_turnresult.player1Score = (QString::fromUtf8(ini.GetValue("GetTurnResult","Player1", 0))).toInt();
             get_turnresult.player2Score = (QString::fromUtf8(ini.GetValue("GetTurnResult","Player2", 0))).toInt();
-            get_turnresult.mode = ini.GetValue("GetTurnResult","Mode", 0);
+            get_turnresult.mode = ini.GetValue("GetTurnResult","Mode", "");
             get_turnresult.maxRoundsAmount = (QString::fromUtf8(ini.GetValue("GetTurnResult","MaxRounds", 0))).toInt();
             get_turnresult.winner = (QString::fromUtf8(ini.GetValue("GetTurnResult","Winner", 0))).toInt();
-
+            get_turnresult.curRound = (QString::fromUtf8(ini.GetValue("GetTurnResult","CurrentRound", 0))).toInt();
+            get_turnresult.choiceP1 = ini.GetValue("GetTurnResult", "ChoiceP1", ""); // Corrected key name
+            get_turnresult.choiceP2 = ini.GetValue("GetTurnResult", "ChoiceP2", ""); // Corrected key name
             get_turnresult.isLoaded = 99;
             emit ServerSentTurnResult(get_turnresult);
         }

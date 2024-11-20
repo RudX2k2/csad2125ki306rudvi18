@@ -11,6 +11,8 @@ typedef enum
     EMULATOR_SCISSORS,
 } emulator_player_choice_enum_t;
 
+
+
 typedef enum
 {
     EMULATOR_TURNRESULT_WINNER_ROUND_FIRST,
@@ -29,6 +31,17 @@ typedef enum
     EMULATOR_BATTLEMODE_EVE,
     EMULATOR_BATTLEMODE_IDLE,
 } emulator_battlemode_enum_t;
+
+
+
+
+// const char emulator_battlemode_string[][5] = 
+// {
+//     "PVP",
+//     "PVE",
+//     "EVE",
+//     "IDLE",
+// };
 
 typedef enum
 {

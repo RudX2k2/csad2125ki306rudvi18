@@ -281,12 +281,18 @@ void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)
                                                 "Mode=%s\n"
                                                 "Player1=%d\n"
                                                 "Player2=%d\n"
+                                                "CurrentRound=%d\n"
                                                 "MaxRounds=%d\n"
+                                                "ChoiceP1=%s\n"
+                                                "ChoiceP2=%s\n"
                                                 "Winner=%d\n",
                                        turn_result.mode,
                                        turn_result.player1,
                                        turn_result.player2,
+                                       turn_result.cur_round,
                                        turn_result.max_rounds,
+                                       turn_result.choice_p1,
+                                       turn_result.choice_p2,
                                        turn_result.winner);
 
     char *get_turnResult = (char *)malloc(get_turnResult_size);
@@ -296,12 +302,18 @@ void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)
                                                       "Mode=%s\n"
                                                       "Player1=%d\n"
                                                       "Player2=%d\n"
+                                                      "CurrentRound=%d\n"
                                                       "MaxRounds=%d\n"
+                                                      "ChoiceP1=%s\n"
+                                                      "ChoiceP2=%s\n"
                                                       "Winner=%d\n",
              turn_result.mode,
              turn_result.player1,
              turn_result.player2,
+             turn_result.cur_round,
              turn_result.max_rounds,
+             turn_result.choice_p1,
+             turn_result.choice_p2,
              turn_result.winner);
 
     UARTCNTRL_SendData(get_turnResult, get_turnResult_size + 1);

@@ -8,8 +8,11 @@ struct GameState {
     std::string mode;
     int player1Score;
     int player2Score;
+    int curRound;
     int maxRoundsAmount;
     int winner;
+    std::string choiceP1;
+    std::string choiceP2;
 };
 
 struct ClientGameTurn {

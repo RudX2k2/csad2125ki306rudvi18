@@ -1,12 +1,13 @@
 #ifndef EMULATOR_PRIVATE_H
 #define EMULATOR_PRIVATE_H
 
+#define EMULATOR_PLAYER_CHOICE_STRING_LEN 9
+
 #include "emulator.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
 #include <time.h>
-
 
 
 typedef enum
@@ -50,6 +51,13 @@ static char emulator_turnresult_winner_strings[][20] =
         "WINNER_DRAW",
         "WINNER_FIRST",
         "WINNER_SECOND",
+};
+
+const char emulator_player_choice_string[][EMULATOR_PLAYER_CHOICE_STRING_LEN] = 
+{
+    "ROCK",
+    "PAPER",
+    "SCISSORS",
 };
 
 static void EMULATOR_MainGameProccessThread(void *a);

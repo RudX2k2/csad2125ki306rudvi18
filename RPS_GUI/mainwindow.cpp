@@ -170,6 +170,7 @@ void MainWindow::on_btnGoPlay_clicked()
         .mode = ui->cBoxGameMode->currentText().toStdString(),
         .player1Score = 0,
         .player2Score = 0,
+        .curRound = 0,
         .maxRoundsAmount = ui->cBoxRoundAmount->currentText().toInt(),
         .winner = 0,
     };
