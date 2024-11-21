@@ -22,7 +22,7 @@ void INIHANDLER_PrintINI(const char *filename);
 
 void INIHANDLER_SendWaitTurn(emulator_players_enum_t player);
 
-void INIHANDLER_SendClientGoodConfig(void);
+void INIHANDLER_SendClientConfigResult(uint8_t result);
 
 void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result);
 

@@ -85,6 +85,20 @@ void GameWindow::GameWindow_UpdateStatusLabel(GameState gamestate)
     qDebug() << "P1 choice: " << QString::fromStdString(gamestate.choiceP1);
     qDebug() << "P2 choice: " << QString::fromStdString(gamestate.choiceP2);
 
+    QString winner_string;
+    if(gamestate.winner == 1)
+    {winner_string = "Player 1";}
+    else if(gamestate.winner == 2){
+        winner_string = "Player 1";
+    }
+    else if(gamestate.winner == 3)
+    {
+        winner_string = "Draw";
+    }
+    else{
+        winner_string = "...";
+    }
+
 
     QString gamestate_text = QString("Mode: %1\n"
                                      "Player 1 score: %2\n"
@@ -92,14 +106,16 @@ void GameWindow::GameWindow_UpdateStatusLabel(GameState gamestate)
                                      "Current round: %4\n"
                                      "Max rounds: %5\n"
                                      "Player 1 choice: %6\n"
-                                     "Player 2 choice: %7\n")
+                                     "Player 2 choice: %7\n"
+                                     "Winner is Player %8")
                                  .arg(QString::fromStdString(gamestate.mode))  // Convert std::string to QString
                                  .arg(gamestate.player1Score)
                                  .arg(gamestate.player2Score)
                                  .arg(gamestate.curRound)
                                  .arg(gamestate.maxRoundsAmount)
                                  .arg(QString::fromStdString(gamestate.choiceP1))
-                                 .arg(QString::fromStdString(gamestate.choiceP2));
+                                 .arg(QString::fromStdString(gamestate.choiceP2))
+                                 .arg(winner_string);
 
     ui->lblGameInfo->setText(gamestate_text);
 }
@@ -265,6 +281,7 @@ void GameWindow::on_btnSaveGame_clicked()
     QTextStream out(&file);
     out << "[GameState]\n";
     out << "Mode=" << QString::fromStdString(gameState.mode) << "\n";
+    out << "IsLoaded=" << 1 << "\n";
     out << "Player1Score=" << gameState.player1Score << "\n";
     out << "Player2Score=" << gameState.player2Score << "\n";
     out << "CurrentRound=" << gameState.curRound << "\n";

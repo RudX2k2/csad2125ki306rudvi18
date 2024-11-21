@@ -60,6 +60,15 @@ const char emulator_player_choice_string[][EMULATOR_PLAYER_CHOICE_STRING_LEN] =
     "SCISSORS",
 };
 
+
+const char emulator_battlemode_string[][5] = 
+{
+    "PVP",
+    "PVE",
+    "EVE",
+    "IDLE",
+};
+
 static void EMULATOR_MainGameProccessThread(void *a);
 
 #endif // EMULATOR_PRIVATE_H

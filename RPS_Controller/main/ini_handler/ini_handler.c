@@ -70,12 +70,20 @@ void INIHANDLER_ParseCommand(char *buffer, uint32_t size)
     if (size < INIHNDLR_CMDBUFF_SIZE)
     {
         INIHNDLR.com_buf_size = size;
-        memcpy(INIHNDLR.command_buf, buffer, size);
-        xTaskCreate(INIHANDLER_ParseTask, NULL, 4096, NULL, configMAX_PRIORITIES - 2, NULL);
+        if (buffer == NULL)
+        {
+
+            ESP_LOGE(TAG, "Bad buffer");
+        }
+        else
+        {
+            memcpy(INIHNDLR.command_buf, buffer, size);
+            xTaskCreate(INIHANDLER_ParseTask, NULL, 4096, NULL, configMAX_PRIORITIES - 2, NULL);
+        }
     }
     else
     {
-        ESP_LOGE(TAG, "Can't ini parse - to large data");
+        ESP_LOGE(TAG, "Can't ini parse - to large data or incorrect size");
     }
 }
 
@@ -154,13 +162,23 @@ static void INIHANDLER_ParseTask(void *a)
     }
     if (client_message.set_gameconfig.isIncluded)
     {
-        EMULATOR_SetGameInfo(client_message.set_gameconfig.isLoaded,
-                             client_message.set_gameconfig.gamestate.mode,
-                             client_message.set_gameconfig.gamestate.Player1,
-                             client_message.set_gameconfig.gamestate.Player2,
-                             client_message.set_gameconfig.gamestate.maxRounds);
-
-        EMULATOR_GiveSemIsStateRetrieved();
+        int err = EMULATOR_SetGameInfo(client_message.set_gameconfig.isLoaded,
+                                       client_message.set_gameconfig.gamestate.mode,
+                                       client_message.set_gameconfig.gamestate.Player1,
+                                       client_message.set_gameconfig.gamestate.Player2,
+                                       client_message.set_gameconfig.gamestate.currentRound,
+                                       client_message.set_gameconfig.gamestate.maxRounds);
+        if (err)
+        {
+            // Needed delay so PC could successfully read the message
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            INIHANDLER_SendClientConfigResult(0);
+        }
+        else
+        {
+            INIHANDLER_SendClientConfigResult(1);
+            EMULATOR_GiveSemIsStateRetrieved();
+        }
     }
     vTaskDelete(NULL);
 }
@@ -206,6 +224,10 @@ static int INIHANDLER_ClientMessageParser(void *user, const char *section, const
         {
             client_msg->set_gameconfig.gamestate.maxRounds = strtol(value, NULL, 0);
         }
+        if (MATCH("SetGameConfig", "CurrentRound"))
+        {
+            client_msg->set_gameconfig.gamestate.currentRound = strtol(value, NULL, 0);
+        }
     }
     if (strcmp(section, "GetGameState") == 0)
     {
@@ -244,12 +266,25 @@ static int INIHANDLER_ClientMessageParser(void *user, const char *section, const
     return 1;
 }
 
-void INIHANDLER_SendClientGoodConfig(void)
+void INIHANDLER_SendClientConfigResult(uint8_t result)
 {
-    char *message = "[GetConfigResult]\n"
-                    "Server=1\n"
-                    "Result=1\n";
-    UARTCNTRL_SendData(message, strlen(message) + 1);
+
+    int send_configResultSize = snprintf(NULL, 0, "[GetConfigResult]\n"
+                                                  "Server=1\n"
+                                                  "Result=%d\n",
+                                         result);
+
+    // Crash there - "block must be free"
+    ESP_LOGE(TAG, "Crash below. Args of funtions 'result' is %u", result);
+    char *send_configResult = (char *)malloc(send_configResultSize);
+
+    snprintf(send_configResult, send_configResultSize + 1, "[GetConfigResult]\n"
+                                                           "Server=1\n"
+                                                           "Result=%d\n",
+             result);
+
+    UARTCNTRL_SendData(send_configResult, strlen(send_configResult));
+    free(send_configResult);
 }
 
 void INIHANDLER_SendWaitTurn(emulator_players_enum_t player)
@@ -269,13 +304,12 @@ void INIHANDLER_SendWaitTurn(emulator_players_enum_t player)
                                                    "Player=%d",
              player_num);
 
-    UARTCNTRL_SendData(send_waitTurn, strlen(send_waitTurn) + 1);
+    UARTCNTRL_SendData(send_waitTurn, strlen(send_waitTurn));
     free(send_waitTurn);
 }
 
 void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)
 {
-    ESP_LOGW(TAG, "Send turn result to client");
     int get_turnResult_size = snprintf(NULL, 0, "[GetTurnResult]\n"
                                                 "Server=1\n"
                                                 "Mode=%s\n"

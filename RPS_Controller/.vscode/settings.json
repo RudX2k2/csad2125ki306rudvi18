@@ -25,7 +25,20 @@
         "string": "c",
         "string_view": "c",
         "span": "c",
-        "ini_handler_private.h": "c"
+        "ini_handler_private.h": "c",
+        "atomic": "cpp",
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "random": "cpp",
+        "format": "cpp",
+        "functional": "cpp",
+        "istream": "cpp",
+        "optional": "cpp",
+        "regex": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "variant": "cpp"
     },
     "idf.flashType": "UART"
 }

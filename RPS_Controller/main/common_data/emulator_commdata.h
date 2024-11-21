@@ -7,6 +7,7 @@ typedef struct
     int Player1;
     int Player2;
     int maxRounds;
+    int currentRound;
     int winner;
 } GameState_CommonData_t;
 

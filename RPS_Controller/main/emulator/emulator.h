@@ -6,9 +6,10 @@
 
 typedef enum
 {
-    EMULATOR_ROCK = 0,
-    EMULATOR_PAPER,
-    EMULATOR_SCISSORS,
+    EMULATOR_CHOICE_ROCK = 0,
+    EMULATOR_CHOICE_PAPER,
+    EMULATOR_CHOICE_SCISSORS,
+    EMULATOR_CHOICES_AMOUNT,
 } emulator_player_choice_enum_t;
 
 
@@ -30,18 +31,10 @@ typedef enum
     EMULATOR_BATTLEMODE_PVE,
     EMULATOR_BATTLEMODE_EVE,
     EMULATOR_BATTLEMODE_IDLE,
+    EMULATOR_BATTLEMODE_AMOUNT,
 } emulator_battlemode_enum_t;
 
 
-
-
-// const char emulator_battlemode_string[][5] = 
-// {
-//     "PVP",
-//     "PVE",
-//     "EVE",
-//     "IDLE",
-// };
 
 typedef enum
 {
@@ -52,7 +45,8 @@ typedef enum
 
 void EMULATOR_Init(void);
 
-void EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, uint16_t player1Score, uint16_t player2Score, uint16_t maxRounds);
+int EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, int player1Score, int player2Score, int curRound, int maxRounds)
+;
 
 GameState_CommonData_t EMULATOR_GetGameState(void);
 

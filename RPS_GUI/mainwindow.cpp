@@ -10,6 +10,9 @@
 #include "gamewindow.h"
 #include "inibyteparser.h"
 #include "gamedata.h"
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
 
 UartTxRx * uart_obj;
 QString port_name;
@@ -34,8 +37,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(uart_obj, &UartTxRx::completeMessageReceived, this, &MainWindow::updateTerminal);
     connect(uart_obj, &UartTxRx::disconnected, this, &MainWindow::writeDisconnectedInTerminal);
     connect(IniByteParser::GetInstance(), &IniByteParser::ServerGoodConfig, this, &MainWindow::readyToGame);
+    connect(IniByteParser::GetInstance(), &IniByteParser::LoadGameToController, this, &MainWindow::readyToGameLoaded);
 
-    ui->btnGoPlay->setDisabled(true);
+        ui->btnGoPlay->setDisabled(true);
 
     const auto availablePorts = QSerialPortInfo::availablePorts();
 
@@ -187,23 +191,91 @@ void MainWindow::on_btnGoPlay_clicked()
     }
 }
 
-void MainWindow::readyToGame(){
-    // Create and show game window only if message was sent successfully
-    if (!gameWindow) {
-        gameWindow = new GameWindow(this, nullptr);
-        gameWindow->setAttribute(Qt::WA_DeleteOnClose);
-        connect(gameWindow, &GameWindow::destroyed, [this]() {
-            gameWindow = nullptr;
-        });
+void MainWindow::readyToGameLoaded(bool res, GameState result_gamestate, const QByteArray & message)
+{
+    if(res)
+    {
+        GameData::getInstance()->GameData_SetGameState(result_gamestate);
+        UartTxRx::GetInstance()->sendMessage(message);
     }
+    else{
+        // Someone had won
+        QMessageBox msgBox;
 
+        // Set the message box title and text
+        msgBox.setWindowTitle("Error!");
+
+        msgBox.setInformativeText("cannot config the game");
+
+        // Add a button to the message box
+        QPushButton *button = msgBox.addButton("Ok", QMessageBox::AcceptRole);
+
+        // Show the message box
+        msgBox.exec();
+    }
+}
+
+
+void MainWindow::readyToGame(int configRes){
+    if(configRes == 1)
+    {
+        // Create and show game window only if message was sent successfully
+        if (!gameWindow) {
+            gameWindow = new GameWindow(this, nullptr);
+            gameWindow->setAttribute(Qt::WA_DeleteOnClose);
+            connect(gameWindow, &GameWindow::destroyed, [this]() {
+                gameWindow = nullptr;
+            });
+        }
         // Hide main window and show game window
         this->hide();
-    gameWindow->show();
+        gameWindow->show();
+    }
+    else{
+        // Someone had won
+        QMessageBox msgBox;
+
+        // Set the message box title and text
+        msgBox.setWindowTitle("Error!");
+
+        msgBox.setInformativeText("cannot config the game");
+
+        // Add a button to the message box
+        QPushButton *button = msgBox.addButton("Ok", QMessageBox::AcceptRole);
+
+        // Show the message box
+        msgBox.exec();
+
+    }
+
+
+
 }
 
-void MainWindow::on_btnLoadGame_clicked()
-{
+void MainWindow::on_btnLoadGame_clicked() {
+    // Open a file dialog to select the .ini file
+    QString fileName = QFileDialog::getOpenFileName(this, "Load Game", "", "INI Files (*.ini)");
+    if (fileName.isEmpty()) {
+        return; // User canceled the dialog
+    }
 
+    // Open the file for reading
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning("Could not open file for reading.");
+        QMessageBox::warning(this, "Load Game", "Failed to open the selected file.");
+        return;
+    }
+
+    // Read the entire file content into a QByteArray
+    QByteArray fileContent = file.readAll();
+    file.close();
+
+    // Pass the data to the parsing function
+    IniByteParser::GetInstance()->INIBYTEPARSER_ParseINIData(fileContent);
+
+    // Notify the user of success
+    QMessageBox::information(this, "Load Game", "Game state loaded successfully!");
 }
+
 

@@ -20,10 +20,10 @@
 
 void app_main(void)
 {
+    EMULATOR_Init();
     UARTCNTRL_Init();
     UARTCNTRL_EnableRXDataPolling();
 
-    EMULATOR_Init();
 
     while (1)
     {

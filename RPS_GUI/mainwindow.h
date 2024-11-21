@@ -34,9 +34,11 @@ private slots:
 
     void on_btnGoPlay_clicked();
 
-    void readyToGame();
+    void readyToGame(int configRes);
 
     void on_btnLoadGame_clicked();
+
+    void readyToGameLoaded(bool res, GameState result_gamestate, const QByteArray & messag);
 
 private:
     Ui::MainWindow *ui;

@@ -40,10 +40,11 @@ public:
     std::string generateGetGameStateMessage();
     GameState parseGameState(const std::string& iniData);
 signals:
-    void ServerGoodConfig();
+    void ServerGoodConfig(int res);
     void ServerSentGameState(GameState state);
     void ServerSentTurnResult(GameState turn_result);
     void ServerWaitTurn(int player);
+    void LoadGameToController(bool initParse, GameState gamestate, const QByteArray & message);
 
 public slots:
     void INIBYTEPARSER_ParseINIData(const QByteArray &message);

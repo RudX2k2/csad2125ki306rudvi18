@@ -6,6 +6,7 @@
 #include "../uart_controller/uart_controller.h"
 #include "../ini_handler/ini_handler_private.h"
 #include "esp_log.h"
+#include "esp_random.h"
 
 #define TAG "EMULATOR"
 
@@ -20,14 +21,15 @@ SemaphoreHandle_t isStateRetrieved;
 
 void EMULATOR_Init(void)
 {
-    srand(time(NULL));
+    // srand(time(NULL));
     isTurnRetrieved = xSemaphoreCreateBinary();
     isStateRetrieved = xSemaphoreCreateBinary();
 
     xTaskCreate(EMULATOR_MainGameProccessThread, "game_emulator", 4096, NULL, configMAX_PRIORITIES - 2, NULL);
 }
 
-void EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, uint16_t player1Score, uint16_t player2Score, uint16_t maxRounds)
+int EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, int player1Score, int player2Score, int curRound, int maxRounds)
+
 {
     emulator.isLoaded = isLoaded;
 
@@ -45,20 +47,52 @@ void EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, uint16_t player1Score, u
     }
     else
     {
-        // error
+        ESP_LOGE(TAG, "Mode error");
+        return -1;
     }
 
-    emulator.max_rounds = maxRounds;
+    if (maxRounds < 1 || maxRounds > 5)
+    {
+        ESP_LOGE(TAG, "maxRounds error");
+
+        return -1;
+    }
+    else
+    {
+        emulator.max_rounds = maxRounds;
+    }
 
     // load game data got
     if (isLoaded == 1)
     {
+        if (curRound < 0)
+        {
+            ESP_LOGE(TAG, "curRound error: %d", curRound);
+
+            return -1;
+        }
+
+        if (curRound > maxRounds)
+        {
+            ESP_LOGE(TAG, "curRound error: %d. bigger then max %d.", curRound, maxRounds);
+
+            return -1;
+        }
+
+        if (player1Score + player2Score >= maxRounds)
+        {
+            ESP_LOGE(TAG, "playersScore error");
+
+            return -1;
+        }
+
         // save players score
+        emulator.players_score[EMULATOR_PLAYER_1] = player1Score;
+        emulator.players_score[EMULATOR_PLAYER_2] = player2Score;
+        emulator.current_round = curRound;
     }
-    // new game
-    else
-    {
-    }
+
+    return 0;
 }
 
 static void EMULATOR_MainGameProccessThread(void *a)
@@ -70,6 +104,7 @@ static void EMULATOR_MainGameProccessThread(void *a)
         case EMULATOR_GAMESTATE_WAIT_CONFIG:
         {
             ESP_LOGW(TAG, "Wait for settings...");
+
             int err = EMULATOR_TakeSemIsStateRetrieved();
             if (err)
             {
@@ -77,31 +112,28 @@ static void EMULATOR_MainGameProccessThread(void *a)
             }
             else
             {
-                ESP_LOGI(TAG, "GameConfig retrieved");
                 // Game is loaded
                 if (emulator.isLoaded == 1)
                 {
+                    ESP_LOGI(TAG, "GOT LAODED DATA\np1:%d\np2:%d\nmax:%d\ncur:%d\nMode:%s", emulator.players_score[EMULATOR_PLAYER_1],
+                             emulator.players_score[EMULATOR_PLAYER_2],
+                             emulator.max_rounds,
+                             emulator.current_round,
+                             EMULATOR_GetBattleModeString(emulator.cur_battlemode));
                 }
-                else
+                // New Game
+                switch (emulator.cur_battlemode)
                 {
-                    // New Game
-                    switch (emulator.cur_battlemode)
-                    {
-                    case EMULATOR_BATTLEMODE_PVP:
-                    case EMULATOR_BATTLEMODE_PVE:
-                        emulator.game_state = EMULATOR_GAMESTATE_WAIT_PLAYER1_TURN;
-                        vTaskDelay(500 / portTICK_PERIOD_MS);
-                        INIHANDLER_SendClientGoodConfig();
-                        break;
-                    case EMULATOR_BATTLEMODE_EVE:
-                        emulator.game_state = EMULATOR_GAMESTATE_PROCCESS_BOTS_GAME;
-                        vTaskDelay(500 / portTICK_PERIOD_MS);
-                        INIHANDLER_SendClientGoodConfig();
-                        break;
-                    default:
-                        ESP_LOGE(TAG, "Unknown battle mode");
-                        break;
-                    }
+                case EMULATOR_BATTLEMODE_PVP:
+                case EMULATOR_BATTLEMODE_PVE:
+                    emulator.game_state = EMULATOR_GAMESTATE_WAIT_PLAYER1_TURN;
+                    break;
+                case EMULATOR_BATTLEMODE_EVE:
+                    emulator.game_state = EMULATOR_GAMESTATE_PROCCESS_BOTS_GAME;
+                    break;
+                default:
+                    ESP_LOGE(TAG, "Unknown battle mode");
+                    break;
                 }
             }
             break;
@@ -207,12 +239,10 @@ static void EMULATOR_MainGameProccessThread(void *a)
             default:
                 break;
             }
-
             // In PVP send result after each turn
             vTaskDelay(500 / portTICK_PERIOD_MS);
 
             INIHANDLER_GetTurnResult(p_result);
-            emulator.current_round++;
             break;
         }
         case EMULATOR_GAMESTATE_PROCCESS_BOTS_GAME:
@@ -222,9 +252,10 @@ static void EMULATOR_MainGameProccessThread(void *a)
             // Play `max_rounds` times.
             for (int i = 0; i < emulator.max_rounds; i++)
             {
-                ESP_LOGI(TAG, "Bots round %d", emulator.current_round);
-                emulator.players_choice[EMULATOR_PLAYER_1] = rand() % (2 + 1 - 0) + 0;
-                emulator.players_choice[EMULATOR_PLAYER_2] = rand() % (2 + 1 - 0) + 0;
+                emulator.players_choice[EMULATOR_PLAYER_1] = esp_random() % 3;
+                emulator.players_choice[EMULATOR_PLAYER_2] = esp_random() % 3;
+                // Very interesting bug. Rand gets ram/heap at initialization and after when try access heap(malloc) - app crashes
+                // rand() % (2 + 1 - 0) + 0;
 
                 emulator_turnresult_winner_t turn_result = EMULATOR_ChoseWinner();
 
@@ -236,6 +267,7 @@ static void EMULATOR_MainGameProccessThread(void *a)
                     p_result.winner = 1;
                     p_result.player1 = emulator.players_score[EMULATOR_PLAYER_1];
                     p_result.player2 = emulator.players_score[EMULATOR_PLAYER_2];
+
                     memcpy(p_result.mode, EMULATOR_GetBattleModeString(emulator.cur_battlemode), 4);
                     p_result.max_rounds = emulator.max_rounds;
 
@@ -247,13 +279,16 @@ static void EMULATOR_MainGameProccessThread(void *a)
                     INIHANDLER_GetTurnResult(p_result);
 
                     emulator.game_state = EMULATOR_GAMESTATE_CLEAN_GAME;
+
                     break;
                 }
                 case EMULATOR_TURNRESULT_WINNER_GAME_SECOND:
                 {
+
                     p_result.winner = 2;
                     p_result.player1 = emulator.players_score[EMULATOR_PLAYER_1];
                     p_result.player2 = emulator.players_score[EMULATOR_PLAYER_2];
+
                     memcpy(p_result.mode, EMULATOR_GetBattleModeString(emulator.cur_battlemode), 4);
                     p_result.max_rounds = emulator.max_rounds;
                     p_result.cur_round = emulator.current_round;
@@ -263,13 +298,16 @@ static void EMULATOR_MainGameProccessThread(void *a)
                     vTaskDelay(500 / portTICK_PERIOD_MS);
                     INIHANDLER_GetTurnResult(p_result);
                     emulator.game_state = EMULATOR_GAMESTATE_CLEAN_GAME;
+
                     break;
                 }
                 case EMULATOR_TURNRESULT_WINNER_DRAW:
                 {
+
                     p_result.winner = 3;
                     p_result.player1 = emulator.players_score[EMULATOR_PLAYER_1];
                     p_result.player2 = emulator.players_score[EMULATOR_PLAYER_2];
+
                     memcpy(p_result.mode, EMULATOR_GetBattleModeString(emulator.cur_battlemode), 4);
                     p_result.max_rounds = emulator.max_rounds;
                     p_result.cur_round = emulator.current_round;
@@ -279,13 +317,13 @@ static void EMULATOR_MainGameProccessThread(void *a)
                     vTaskDelay(500 / portTICK_PERIOD_MS);
                     INIHANDLER_GetTurnResult(p_result);
                     emulator.game_state = EMULATOR_GAMESTATE_CLEAN_GAME;
+
                     break;
                 }
                 case EMULATOR_TURNRESULT_WINNER_ROUND_FIRST:
                 case EMULATOR_TURNRESULT_WINNER_ROUND_SECOND:
                 case EMULATOR_TURNRESULT_WINNER_ROUND_DRAW:
                 {
-                    emulator.current_round++;
 
                     break;
                 }
@@ -293,25 +331,17 @@ static void EMULATOR_MainGameProccessThread(void *a)
                     break;
                 }
             }
-
             break;
         }
         case EMULATOR_GAMESTATE_PROCCESS_PLAYERBOT_GAME:
         {
             GetTurnResult_CommonData_t p_result = {.winner = 0};
-
-            p_result.player1 = emulator.players_score[EMULATOR_PLAYER_1];
-            p_result.player2 = rand() % (2 + 1 - 0) + 0;
-            memcpy(p_result.mode, EMULATOR_GetBattleModeString(emulator.cur_battlemode), 4);
-            p_result.max_rounds = emulator.max_rounds;
+            // Since this is PVE - random bot result
+            emulator.players_choice[EMULATOR_PLAYER_2] = esp_random() % 3;
 
             emulator_turnresult_winner_t turn_result = EMULATOR_ChoseWinner();
 
-            p_result.cur_round = emulator.current_round;
-            memcpy(p_result.choice_p1, emulator_player_choice_string[emulator.players_choice[EMULATOR_PLAYER_1]], EMULATOR_PLAYER_CHOICE_STRING_LEN);
-            memcpy(p_result.choice_p2, emulator_player_choice_string[emulator.players_choice[EMULATOR_PLAYER_2]], EMULATOR_PLAYER_CHOICE_STRING_LEN);
-
-            ESP_LOGW(TAG, "turn_result: %s", emulator_turnresult_winner_strings[turn_result]);
+            // ESP_LOGW(TAG, "PVE turn_result: %s", emulator_turnresult_winner_strings[turn_result]);
             switch (turn_result)
             {
             case EMULATOR_TURNRESULT_WINNER_GAME_FIRST:
@@ -343,11 +373,17 @@ static void EMULATOR_MainGameProccessThread(void *a)
                 break;
             }
 
+            p_result.player1 = emulator.players_score[EMULATOR_PLAYER_1];
+            p_result.player2 = emulator.players_score[EMULATOR_PLAYER_2];
+            memcpy(p_result.mode, EMULATOR_GetBattleModeString(emulator.cur_battlemode), 4);
+            p_result.max_rounds = emulator.max_rounds;
+            p_result.cur_round = emulator.current_round;
+            memcpy(p_result.choice_p1, emulator_player_choice_string[emulator.players_choice[EMULATOR_PLAYER_1]], EMULATOR_PLAYER_CHOICE_STRING_LEN);
+            memcpy(p_result.choice_p2, emulator_player_choice_string[emulator.players_choice[EMULATOR_PLAYER_2]], EMULATOR_PLAYER_CHOICE_STRING_LEN);
+            
             // In PVP and PVE send result after each turn
             vTaskDelay(500 / portTICK_PERIOD_MS);
-
             INIHANDLER_GetTurnResult(p_result);
-            emulator.current_round++;
             break;
         }
         case EMULATOR_GAMESTATE_CLEAN_GAME:
@@ -374,15 +410,15 @@ void EMULATOR_SetNewRecievedTurn(char *turn)
 {
     if (strcmp(turn, "ROCK") == 0)
     {
-        emulator.recent_turn_choice = EMULATOR_ROCK;
+        emulator.recent_turn_choice = EMULATOR_CHOICE_ROCK;
     }
     else if (strcmp(turn, "PAPER") == 0)
     {
-        emulator.recent_turn_choice = EMULATOR_PAPER;
+        emulator.recent_turn_choice = EMULATOR_CHOICE_PAPER;
     }
     else if (strcmp(turn, "SCISSORS") == 0)
     {
-        emulator.recent_turn_choice = EMULATOR_SCISSORS;
+        emulator.recent_turn_choice = EMULATOR_CHOICE_SCISSORS;
     }
     else
     {
@@ -444,7 +480,7 @@ char *EMULATOR_GetBattleModeString(emulator_battlemode_enum_t mode)
         return "EVE";
         break;
     case EMULATOR_BATTLEMODE_IDLE:
-        return "NO";
+        return "NOO";
         break;
     default:
         break;
@@ -471,7 +507,7 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
     emulator_turnresult_winner_t game_turn_result = {0};
 
     bool is_last_round = false;
-    if (emulator.current_round + 1 >= emulator.max_rounds)
+    if ((emulator.current_round += 1) >= emulator.max_rounds)
     {
         // if not draw then someone will win
         is_last_round = true;
@@ -480,82 +516,68 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
 
     switch (p1)
     {
-    case EMULATOR_ROCK:
-    {
+    case EMULATOR_CHOICE_ROCK:
         switch (p2)
         {
-        case EMULATOR_ROCK:
+        case EMULATOR_CHOICE_ROCK:
             game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
-            emulator.players_score[EMULATOR_PLAYER_1]++;
-            emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
-        case EMULATOR_PAPER:
-            emulator.players_score[EMULATOR_PLAYER_2]++;
+        case EMULATOR_CHOICE_PAPER:
             game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
+            emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
-        case EMULATOR_SCISSORS:
-            emulator.players_score[EMULATOR_PLAYER_1]++;
+        case EMULATOR_CHOICE_SCISSORS:
             game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+            emulator.players_score[EMULATOR_PLAYER_1]++;
             break;
         default:
-            emulator.players_score[EMULATOR_PLAYER_1]++;
-            emulator.players_score[EMULATOR_PLAYER_2]++;
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
+            // Handle invalid p2 input here if necessary
             break;
         }
         break;
-    }
-    case EMULATOR_PAPER:
-    {
+
+    case EMULATOR_CHOICE_PAPER:
         switch (p2)
         {
-        case EMULATOR_ROCK:
-            emulator.players_score[EMULATOR_PLAYER_1]++;
+        case EMULATOR_CHOICE_ROCK:
             game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
-            break;
-        case EMULATOR_PAPER:
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
             emulator.players_score[EMULATOR_PLAYER_1]++;
-            emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
-        case EMULATOR_SCISSORS:
-            emulator.players_score[EMULATOR_PLAYER_2]++;
+        case EMULATOR_CHOICE_PAPER:
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
+            break;
+        case EMULATOR_CHOICE_SCISSORS:
             game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
-            break;
-        default:
-            emulator.players_score[EMULATOR_PLAYER_1]++;
-            emulator.players_score[EMULATOR_PLAYER_2]++;
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
-            break;
-        }
-        break;
-    }
-    case EMULATOR_SCISSORS:
-    {
-        switch (p2)
-        {
-        case EMULATOR_ROCK:
-            emulator.players_score[EMULATOR_PLAYER_2]++;
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
-            break;
-        case EMULATOR_PAPER:
-            emulator.players_score[EMULATOR_PLAYER_1]++;
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
-            break;
-        case EMULATOR_SCISSORS:
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
-            emulator.players_score[EMULATOR_PLAYER_1]++;
             emulator.players_score[EMULATOR_PLAYER_2]++;
             break;
         default:
-            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
-            emulator.players_score[EMULATOR_PLAYER_1]++;
-            emulator.players_score[EMULATOR_PLAYER_2]++;
+            // Handle invalid p2 input here if necessary
             break;
         }
         break;
-    }
+
+    case EMULATOR_CHOICE_SCISSORS:
+        switch (p2)
+        {
+        case EMULATOR_CHOICE_ROCK:
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_SECOND;
+            emulator.players_score[EMULATOR_PLAYER_2]++;
+            break;
+        case EMULATOR_CHOICE_PAPER:
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_FIRST;
+            emulator.players_score[EMULATOR_PLAYER_1]++;
+            break;
+        case EMULATOR_CHOICE_SCISSORS:
+            game_turn_result = EMULATOR_TURNRESULT_WINNER_ROUND_DRAW;
+            break;
+        default:
+            // Handle invalid p2 input here if necessary
+            break;
+        }
+        break;
+
     default:
+        // Handle invalid p1 input here if necessary
         break;
     }
 

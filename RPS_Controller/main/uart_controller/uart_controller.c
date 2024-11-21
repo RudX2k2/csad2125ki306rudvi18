@@ -89,7 +89,7 @@ static void UARTCNTRL_RX_Task(void *a)
                 }
                 
                 // Now process the complete message
-                // ESP_LOGW(TAG, "Complete data received, size: %d", UARTHNDL.rx_size);
+                // ESP_LOGW(TAG, "Complete data received, size: %lu", UARTHNDL.rx_size);
                 // ESP_LOGW(TAG, "Data: %s", UARTHNDL.rx_buffer);
                 
                 INIHANDLER_ParseCommand((char *)UARTHNDL.rx_buffer, UARTHNDL.rx_size);
@@ -106,7 +106,7 @@ void UARTCNTRL_SendData(char *buffer, uint32_t size)
     memcpy(UARTHNDL.tx_buffer, buffer, size);
     UARTHNDL.tx_size = size;
 
-    ESP_LOGE(TAG, "ControllerData:%.*s", (int)size+1, buffer);
+    // ESP_LOGE(TAG, "ControllerData:%.*s", (int)size+1, buffer);
 
     uart_write_bytes(UART_NUM_0, UARTHNDL.tx_buffer, UARTHNDL.tx_size);
 }

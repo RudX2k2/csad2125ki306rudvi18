@@ -69,7 +69,7 @@ GameState IniByteParser::parseGameState(const std::string& iniData) {
 
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     // QMutexLocker locker(&iniMutex); // Lock the mutex for the duration of this function
-    // qDebug() << "INI parse:\n" << QString(message) << "\n";
+    qDebug() << "INI parse:\n" << QString(message) << "\n";
     parseFromString(message.toStdString());
     // CSimpleIniA::TNamesDepend sections;
     // ini.GetAllSections(sections);
@@ -101,11 +101,11 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
         int getConfigResult_serverIncluded = (QString::fromUtf8(ini.GetValue("GetConfigResult", "Server", "0"))).toInt();
         if(getConfigResult_serverIncluded == 1)
         {
-            int getConfigResult_result = (QString::fromUtf8(ini.GetValue("GetConfigResult", "Result", "0"))).toInt();
+            int getConfigResult_result = (QString::fromUtf8(ini.GetValue("GetConfigResult", "Result", "99"))).toInt();
 
-            if(getConfigResult_result == 1)
+            if(getConfigResult_result == 1 || getConfigResult_result == 0)
             {
-                emit ServerGoodConfig();
+                emit ServerGoodConfig(getConfigResult_result);
             }
         }
     }
@@ -125,7 +125,6 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     }
     if(ini.GetSectionSize("GetTurnResult") > 0)
     {
-        qDebug() << "TURN RESULT";
         int isServerMsg = (QString::fromUtf8(ini.GetValue("GetTurnResult","Server", 0))).toInt();
         if(isServerMsg == 1)
         {
@@ -150,6 +149,29 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
             int player_to_wait_turn = (QString::fromUtf8(ini.GetValue("WaitClientTurn", "Player", 0))).toInt();
             qDebug() << "Emit server wait turn";
             emit ServerWaitTurn(player_to_wait_turn);
+        }
+    }
+    if(ini.GetSectionSize("SetGameConfig")>0)
+    {
+        int isLoaded = (QString::fromUtf8(ini.GetValue("SetGameConfig", "IsLoaded", 0))).toInt();
+
+        GameState result_gamestate;
+        result_gamestate.mode = ini.GetValue("SetGameConfig","Mode", 0);
+        result_gamestate.player1Score = (QString::fromUtf8(ini.GetValue("SetGameConfig","Player1", 0))).toInt();
+        result_gamestate.player2Score = (QString::fromUtf8(ini.GetValue("SetGameConfig","Player2", 0))).toInt();
+        result_gamestate.maxRoundsAmount = (QString::fromUtf8(ini.GetValue("SetGameConfig","MaxRounds", 0))).toInt();
+        result_gamestate.curRound = (QString::fromUtf8(ini.GetValue("SetGameConfig","CurrentRound", 0))).toInt();
+
+
+        if(isLoaded == 1)
+        {
+            qDebug("Set game loaded!");
+            emit LoadGameToController(true, result_gamestate, message);
+        }
+        else{
+            qDebug("Not set game loaded!");
+
+            emit LoadGameToController(false, result_gamestate, message);
         }
     }
     ini.Reset();
