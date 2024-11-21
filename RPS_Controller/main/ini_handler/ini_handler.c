@@ -78,7 +78,9 @@ void INIHANDLER_ParseCommand(char *buffer, uint32_t size)
         else
         {
             memcpy(INIHNDLR.command_buf, buffer, size);
-            xTaskCreate(INIHANDLER_ParseTask, NULL, 4096, NULL, configMAX_PRIORITIES - 2, NULL);
+            ESP_LOGW(TAG, "INIHANDLER_ParseTask free heap %u", xPortGetFreeHeapSize());
+            // ESP_LOGW(TAG, "INIHANDLER_ParseTask largest free heap block %zu", heap_caps_get_largest_free_block());
+            xTaskCreate(INIHANDLER_ParseTask, NULL, 8192, NULL, configMAX_PRIORITIES - 2, NULL);
         }
     }
     else
@@ -126,7 +128,8 @@ static char *memory_reader(char *str, int num, void *stream)
 
 static void INIHANDLER_ParseTask(void *a)
 {
-    ClientMessage_t client_message;
+
+    ClientMessage_t client_message = {0};
 
     // ESP_LOGW(TAG, "\n%s", INIHNDLR.command_buf);
 
@@ -268,58 +271,61 @@ static int INIHANDLER_ClientMessageParser(void *user, const char *section, const
 
 void INIHANDLER_SendClientConfigResult(uint8_t result)
 {
+    // Use a sufficiently large buffer to accommodate the formatted string
+    char send_configResult[128]; // Adjust size as needed for your format
 
-    int send_configResultSize = snprintf(NULL, 0, "[GetConfigResult]\n"
-                                                  "Server=1\n"
-                                                  "Result=%d\n",
+    int send_configResultSize = snprintf(send_configResult, sizeof(send_configResult),
+                                         "[GetConfigResult]\n"
+                                         "Server=1\n"
+                                         "Result=%d\n",
                                          result);
 
-    // Crash there - "block must be free"
-    ESP_LOGE(TAG, "Crash below. Args of funtions 'result' is %u", result);
-    char *send_configResult = (char *)malloc(send_configResultSize);
+    if (send_configResultSize < 0 || send_configResultSize >= sizeof(send_configResult))
+    {
+        // Handle the error: message was truncated or formatting failed
+        ESP_LOGE(TAG, "Error formatting config result. Buffer too small or snprintf failed.");
+        return;
+    }
 
-    snprintf(send_configResult, send_configResultSize + 1, "[GetConfigResult]\n"
-                                                           "Server=1\n"
-                                                           "Result=%d\n",
-             result);
-
-    UARTCNTRL_SendData(send_configResult, strlen(send_configResult));
-    free(send_configResult);
+    UARTCNTRL_SendData(send_configResult, send_configResultSize);
 }
 
 void INIHANDLER_SendWaitTurn(emulator_players_enum_t player)
 {
     int player_num = player + 1;
-    int send_waitTurnSize = snprintf(NULL, 0, "[WaitClientTurn]\n"
-                                              "Server=1\n"
-                                              "WaitTurn=1\n"
-                                              "Player=%d",
+    char send_waitTurn[128]; // Adjust size based on expected output
+
+    int send_waitTurnSize = snprintf(send_waitTurn, sizeof(send_waitTurn),
+                                     "[WaitClientTurn]\n"
+                                     "Server=1\n"
+                                     "WaitTurn=1\n"
+                                     "Player=%d",
                                      player_num);
 
-    char *send_waitTurn = (char *)malloc(send_waitTurnSize);
+    if (send_waitTurnSize < 0 || send_waitTurnSize >= sizeof(send_waitTurn))
+    {
+        ESP_LOGE(TAG, "Error formatting wait turn message. Buffer too small or snprintf failed.");
+        return;
+    }
 
-    snprintf(send_waitTurn, send_waitTurnSize + 1, "[WaitClientTurn]\n"
-                                                   "Server=1\n"
-                                                   "WaitTurn=1\n"
-                                                   "Player=%d",
-             player_num);
-
-    UARTCNTRL_SendData(send_waitTurn, strlen(send_waitTurn));
-    free(send_waitTurn);
+    UARTCNTRL_SendData(send_waitTurn, send_waitTurnSize);
 }
 
 void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)
 {
-    int get_turnResult_size = snprintf(NULL, 0, "[GetTurnResult]\n"
-                                                "Server=1\n"
-                                                "Mode=%s\n"
-                                                "Player1=%d\n"
-                                                "Player2=%d\n"
-                                                "CurrentRound=%d\n"
-                                                "MaxRounds=%d\n"
-                                                "ChoiceP1=%s\n"
-                                                "ChoiceP2=%s\n"
-                                                "Winner=%d\n",
+    char get_turnResult[256]; // Adjust size based on expected output
+
+    int get_turnResult_size = snprintf(get_turnResult, sizeof(get_turnResult),
+                                       "[GetTurnResult]\n"
+                                       "Server=1\n"
+                                       "Mode=%s\n"
+                                       "Player1=%d\n"
+                                       "Player2=%d\n"
+                                       "CurrentRound=%d\n"
+                                       "MaxRounds=%d\n"
+                                       "ChoiceP1=%s\n"
+                                       "ChoiceP2=%s\n"
+                                       "Winner=%d\n",
                                        turn_result.mode,
                                        turn_result.player1,
                                        turn_result.player2,
@@ -329,61 +335,38 @@ void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result)
                                        turn_result.choice_p2,
                                        turn_result.winner);
 
-    char *get_turnResult = (char *)malloc(get_turnResult_size);
+    if (get_turnResult_size < 0 || get_turnResult_size >= sizeof(get_turnResult))
+    {
+        ESP_LOGE(TAG, "Error formatting turn result message. Buffer too small or snprintf failed.");
+        return;
+    }
 
-    snprintf(get_turnResult, get_turnResult_size + 1, "[GetTurnResult]\n"
-                                                      "Server=1\n"
-                                                      "Mode=%s\n"
-                                                      "Player1=%d\n"
-                                                      "Player2=%d\n"
-                                                      "CurrentRound=%d\n"
-                                                      "MaxRounds=%d\n"
-                                                      "ChoiceP1=%s\n"
-                                                      "ChoiceP2=%s\n"
-                                                      "Winner=%d\n",
-             turn_result.mode,
-             turn_result.player1,
-             turn_result.player2,
-             turn_result.cur_round,
-             turn_result.max_rounds,
-             turn_result.choice_p1,
-             turn_result.choice_p2,
-             turn_result.winner);
-
-    UARTCNTRL_SendData(get_turnResult, get_turnResult_size + 1);
-    free(get_turnResult);
+    UARTCNTRL_SendData(get_turnResult, get_turnResult_size);
 }
 
 void INIHANDLER_GetGameState(GameState_CommonData_t gamestate)
 {
-    int get_gamestate_size = snprintf(NULL, 0, "[GetGameState]\n"
-                                               "Server=1\n"
-                                               "Mode=%s\n"
-                                               "Player1=%d\n"
-                                               "Player2=%d\n"
-                                               "MaxRounds=%d\n"
-                                               "Winner=%d\n",
+    char get_gamestate[128]; // Adjust size based on expected output
+
+    int get_gamestate_size = snprintf(get_gamestate, sizeof(get_gamestate),
+                                      "[GetGameState]\n"
+                                      "Server=1\n"
+                                      "Mode=%s\n"
+                                      "Player1=%d\n"
+                                      "Player2=%d\n"
+                                      "MaxRounds=%d\n"
+                                      "Winner=%d\n",
                                       gamestate.mode,
                                       gamestate.Player1,
                                       gamestate.Player2,
                                       gamestate.maxRounds,
                                       gamestate.winner);
 
-    char *get_gamestate = (char *)malloc(get_gamestate_size);
+    if (get_gamestate_size < 0 || get_gamestate_size >= sizeof(get_gamestate))
+    {
+        ESP_LOGE(TAG, "Error formatting game state message. Buffer too small or snprintf failed.");
+        return;
+    }
 
-    snprintf(get_gamestate, get_gamestate_size + 1, "[GetGameState]\n"
-                                                    "Server=1\n"
-                                                    "Mode=%s\n"
-                                                    "Player1=%d\n"
-                                                    "Player2=%d\n"
-                                                    "MaxRounds=%d\n"
-                                                    "Winner=%d\n",
-             gamestate.mode,
-             gamestate.Player1,
-             gamestate.Player2,
-             gamestate.maxRounds,
-             gamestate.winner);
-
-    UARTCNTRL_SendData(get_gamestate, get_gamestate_size + 1);
-    free(get_gamestate);
+    UARTCNTRL_SendData(get_gamestate, get_gamestate_size);
 }

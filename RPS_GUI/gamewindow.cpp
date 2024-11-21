@@ -279,17 +279,14 @@ void GameWindow::on_btnSaveGame_clicked()
 
     // Write data in .ini format
     QTextStream out(&file);
-    out << "[GameState]\n";
+    out << "[SetGameConfig]\n";
+    out << "Client=1\n";
+    out << "IsLoaded=1\n";
     out << "Mode=" << QString::fromStdString(gameState.mode) << "\n";
-    out << "IsLoaded=" << 1 << "\n";
-    out << "Player1Score=" << gameState.player1Score << "\n";
-    out << "Player2Score=" << gameState.player2Score << "\n";
+    out << "Player1=" << gameState.player1Score << "\n";
+    out << "Player2=" << gameState.player2Score << "\n";
     out << "CurrentRound=" << gameState.curRound << "\n";
-    out << "MaxRoundsAmount=" << gameState.maxRoundsAmount << "\n";
-    out << "Winner=" << gameState.winner << "\n";
-    out << "ChoiceP1=" << QString::fromStdString(gameState.choiceP1) << "\n";
-    out << "ChoiceP2=" << QString::fromStdString(gameState.choiceP2) << "\n";
-
+    out << "MaxRounds=" << gameState.maxRoundsAmount << "\n";
     file.close();
 
     // Notify the user that the game has been saved

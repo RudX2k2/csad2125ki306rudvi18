@@ -27,6 +27,7 @@
 #define TURN_SCISSORS "Scissors"
 
 #define INIHNDLR_CMDBUFF_SIZE 2048
+#define INIHNDLR_SEND_CLIENT_DATA_MAX_SIZE 100
 
 typedef struct
 {

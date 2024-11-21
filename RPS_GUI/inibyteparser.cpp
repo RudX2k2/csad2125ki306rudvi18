@@ -69,7 +69,7 @@ GameState IniByteParser::parseGameState(const std::string& iniData) {
 
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     // QMutexLocker locker(&iniMutex); // Lock the mutex for the duration of this function
-    qDebug() << "INI parse:\n" << QString(message) << "\n";
+
     parseFromString(message.toStdString());
     // CSimpleIniA::TNamesDepend sections;
     // ini.GetAllSections(sections);
