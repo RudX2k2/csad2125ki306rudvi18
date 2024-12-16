@@ -6,6 +6,11 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 project(RPS_Controller)
 
-# Add this line if you are using a custom partition file
-set(PARTITION_TABLE_CUSTOM ${CMAKE_SOURCE_DIR}/partitions.csv)
-idf_build_set_property(PARTITION_TABLE_CUSTOM ${PARTITION_TABLE_CUSTOM})
+
+if(NOT BUILD_TESTS)
+    set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/main)
+endif()
+
+if(BUILD_TESTS)
+    add_subdirectory(test)
+endif()
