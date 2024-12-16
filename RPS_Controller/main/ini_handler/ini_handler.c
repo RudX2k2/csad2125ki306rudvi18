@@ -9,77 +9,19 @@
 
 INIHNDLR_t INIHNDLR = {0};
 
-void INIHANDLER_WriteToINI_RX(char *buffer, uint64_t size)
-{
-    FILE *ini;
-
-    if ((ini = fopen(INI_RX_FILENAME, "w")) == NULL)
-    {
-        ESP_LOGE(TAG, "Cannot create %s\n", INI_RX_FILENAME);
-        return;
-    }
-
-    int err = fprintf(ini,
-                      "%.*s", (int)size, buffer);
-    if (err < 0)
-    {
-        ESP_LOGE("Cannot write into %s", INI_RX_FILENAME);
-    }
-
-    fclose(ini);
-}
-
-void INIHANDLER_PrintINI(const char *filename)
-{
-    FILE *ini_file;
-
-    if ((ini_file = fopen(INI_RX_FILENAME, "r")) == NULL)
-    {
-        ESP_LOGE(TAG, "Cannot create %s\n", INI_RX_FILENAME);
-        return;
-    }
-
-    char ini_file_text[512];
-
-    int i = 0;
-
-    int c;
-    while ((c = fgetc(ini_file)) != EOF)
-    {
-        // All alphabet and `\n`
-        if ((c >= 32 && c <= 126) || c == 10)
-        {
-            snprintf(&ini_file_text[i], sizeof(int), "%c", (char)c);
-            i++;
-        }
-        // Increase delay to prevent Watchdog Timeout
-        vTaskDelay(50 / portTICK_PERIOD_MS); // 50 ms delay to yield more time
-    }
-    if (i > 0)
-    {
-        ESP_LOGI(TAG, "%.*s", i, ini_file_text);
-    }
-
-    fclose(ini_file);
-}
-
 void INIHANDLER_ParseCommand(char *buffer, uint32_t size)
 {
     memset(INIHNDLR.command_buf, 0, INIHNDLR_CMDBUFF_SIZE);
-
     if (size < INIHNDLR_CMDBUFF_SIZE)
     {
         INIHNDLR.com_buf_size = size;
         if (buffer == NULL)
         {
-
             ESP_LOGE(TAG, "Bad buffer");
         }
         else
         {
             memcpy(INIHNDLR.command_buf, buffer, size);
-            ESP_LOGW(TAG, "INIHANDLER_ParseTask free heap %u", xPortGetFreeHeapSize());
-            // ESP_LOGW(TAG, "INIHANDLER_ParseTask largest free heap block %zu", heap_caps_get_largest_free_block());
             xTaskCreate(INIHANDLER_ParseTask, NULL, 8192, NULL, configMAX_PRIORITIES - 2, NULL);
         }
     }
@@ -128,7 +70,6 @@ static char *memory_reader(char *str, int num, void *stream)
 
 static void INIHANDLER_ParseTask(void *a)
 {
-
     ClientMessage_t client_message = {0};
 
     // ESP_LOGW(TAG, "\n%s", INIHNDLR.command_buf);
@@ -182,6 +123,11 @@ static void INIHANDLER_ParseTask(void *a)
             INIHANDLER_SendClientConfigResult(1);
             EMULATOR_GiveSemIsStateRetrieved();
         }
+    }
+    if (client_message.clean_game.isIncluded)
+    {
+        ESP_LOGI(TAG, "Clean game");
+        EMULATOR_CleanGame();
     }
     vTaskDelete(NULL);
 }
@@ -264,6 +210,21 @@ static int INIHANDLER_ClientMessageParser(void *user, const char *section, const
         if (MATCH("SetPlayerTurn", "Turn"))
         {
             memcpy(client_msg->set_player_turn.turn_result.turn, value, 10);
+        }
+    }
+    if (strcmp(section, "CleanGame") == 0)
+    {
+        if (MATCH("CleanGame", "Client"))
+        {
+            int clientVal = strtol(value, NULL, 0);
+            if (clientVal == 1)
+            {
+                client_msg->clean_game.isIncluded = true;
+            }
+            else
+            {
+                client_msg->clean_game.isIncluded = false;
+            }
         }
     }
     return 1;
@@ -369,4 +330,22 @@ void INIHANDLER_GetGameState(GameState_CommonData_t gamestate)
     }
 
     UARTCNTRL_SendData(get_gamestate, get_gamestate_size);
+}
+
+void INIHANDLER_SendClientCleanOk(void)
+{
+    char clean_result[128]; // Adjust size based on expected output
+
+    int clean_result_size = snprintf(clean_result, sizeof(clean_result),
+                                      "[CleanResult]\n"
+                                      "Server=1\n"
+                                      "Result=1\n");
+
+    if (clean_result_size < 0 || clean_result_size >= sizeof(clean_result))
+    {
+        ESP_LOGE(TAG, "Error formatting game state message. Buffer too small or snprintf failed.");
+        return;
+    }
+
+    UARTCNTRL_SendData(clean_result, clean_result_size);
 }

@@ -38,6 +38,7 @@ public:
     std::string generateSetGameStateMessage(const GameState& state);
     std::string generateSetPlayerTurn(const ClientGameTurn& turn);
     std::string generateGetGameStateMessage();
+    std::string generateCleanGame();
     GameState parseGameState(const std::string& iniData);
 signals:
     void ServerGoodConfig(int res);
@@ -45,6 +46,7 @@ signals:
     void ServerSentTurnResult(GameState turn_result);
     void ServerWaitTurn(int player);
     void LoadGameToController(bool initParse, GameState gamestate, const QByteArray & message);
+    void ServerGoodClean();
 
 public slots:
     void INIBYTEPARSER_ParseINIData(const QByteArray &message);

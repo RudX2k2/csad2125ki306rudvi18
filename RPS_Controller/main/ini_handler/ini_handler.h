@@ -5,24 +5,17 @@
 #include "../common_data/emulator_commdata.h"
 #include "../emulator/emulator.h"
 
-/// @brief Write retrieved buffer to `rx.ini` file so other functions can handle
-/// @param buffer
-/// @param size
-void INIHANDLER_WriteToINI_RX(char *buffer, uint64_t size);
-
 /// @brief Read data form `rx.ini` file and perform operations
 /// @param
 void INIHANDLER_ParseCommand(char *buffer, uint32_t size);
-
-/// @brief Print `.ini` file
-/// @param ini_file
-void INIHANDLER_PrintINI(const char *filename);
 
 // ------------------------- Send data to client ---------------------------
 
 void INIHANDLER_SendWaitTurn(emulator_players_enum_t player);
 
 void INIHANDLER_SendClientConfigResult(uint8_t result);
+
+void INIHANDLER_SendClientCleanOk(void);
 
 void INIHANDLER_GetTurnResult(GetTurnResult_CommonData_t turn_result);
 

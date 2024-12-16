@@ -40,6 +40,8 @@ private slots:
 
     void readyToGameLoaded(bool res, GameState result_gamestate, const QByteArray & messag);
 
+    void on_btnCleanGame_clicked();
+
 private:
     Ui::MainWindow *ui;
     GameWindow *gameWindow;

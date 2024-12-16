@@ -380,7 +380,7 @@ static void EMULATOR_MainGameProccessThread(void *a)
             p_result.cur_round = emulator.current_round;
             memcpy(p_result.choice_p1, emulator_player_choice_string[emulator.players_choice[EMULATOR_PLAYER_1]], EMULATOR_PLAYER_CHOICE_STRING_LEN);
             memcpy(p_result.choice_p2, emulator_player_choice_string[emulator.players_choice[EMULATOR_PLAYER_2]], EMULATOR_PLAYER_CHOICE_STRING_LEN);
-            
+
             // In PVP and PVE send result after each turn
             vTaskDelay(500 / portTICK_PERIOD_MS);
             INIHANDLER_GetTurnResult(p_result);
@@ -397,6 +397,9 @@ static void EMULATOR_MainGameProccessThread(void *a)
             emulator.cur_battlemode = EMULATOR_BATTLEMODE_IDLE;
 
             emulator.game_state = EMULATOR_GAMESTATE_WAIT_CONFIG;
+            
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+            INIHANDLER_SendClientCleanOk();
             break;
         }
         default:
@@ -438,9 +441,13 @@ void EMULATOR_GiveSemIsTurnRetrieved(void)
 
 int EMULATOR_TakeSemIsTurnRetrieved(void)
 {
-    if (xSemaphoreTake(isTurnRetrieved, portMAX_DELAY) == pdTRUE)
+    while (emulator.game_state != EMULATOR_GAMESTATE_CLEAN_GAME)
     {
-        return 0;
+        if (xSemaphoreTake(isTurnRetrieved, ( TickType_t ) 10) == pdTRUE)
+        {
+            return 0;
+        }
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
     return -1;
 }
@@ -459,9 +466,13 @@ void EMULATOR_GiveSemIsStateRetrieved(void)
 
 int EMULATOR_TakeSemIsStateRetrieved(void)
 {
-    if (xSemaphoreTake(isStateRetrieved, portMAX_DELAY) == pdTRUE)
+     while (emulator.game_state != EMULATOR_GAMESTATE_CLEAN_GAME)
     {
-        return 0;
+        if (xSemaphoreTake(isStateRetrieved, ( TickType_t ) 10) == pdTRUE)
+        {
+            return 0;
+        }
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
     return -1;
 }
@@ -500,7 +511,7 @@ GameState_CommonData_t EMULATOR_GetGameState(void)
     return gamestate;
 }
 
-emulator_turnresult_winner_t EMULATOR_ChoseWinner()
+emulator_turnresult_winner_t EMULATOR_ChoseWinner(void)
 {
     emulator_player_choice_enum_t p1 = emulator.players_choice[EMULATOR_PLAYER_1];
     emulator_player_choice_enum_t p2 = emulator.players_choice[EMULATOR_PLAYER_2];
@@ -599,4 +610,9 @@ emulator_turnresult_winner_t EMULATOR_ChoseWinner()
     }
 
     return game_turn_result;
+}
+
+void EMULATOR_CleanGame(void)
+{
+    emulator.game_state = EMULATOR_GAMESTATE_CLEAN_GAME;
 }

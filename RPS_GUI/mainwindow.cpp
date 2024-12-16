@@ -279,3 +279,11 @@ void MainWindow::on_btnLoadGame_clicked() {
 }
 
 
+
+void MainWindow::on_btnCleanGame_clicked()
+{
+    std::string send_clean_game = IniByteParser::GetInstance()->generateCleanGame();
+
+    UartTxRx::GetInstance()->sendMessage(QByteArray::fromStdString(send_clean_game));
+}
+

@@ -56,9 +56,17 @@ typedef struct
 
 typedef struct
 {
+    bool isIncluded;
+} ClientMsg_CleanGame_t;
+
+
+typedef struct
+{
     ClientMsg_SetPlayerTurn_t set_player_turn;
     ClientMsg_SetGameConfig_t set_gameconfig;
     ClientMsg_GetGameState_t get_gamestate;
+    ClientMsg_CleanGame_t clean_game;
+
 } ClientMessage_t;
 
 static void INIHANDLER_ParseTask(void *a);

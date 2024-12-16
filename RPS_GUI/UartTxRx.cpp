@@ -65,6 +65,7 @@ void UartTxRx::checkForMoreData()
     if (serial.bytesAvailable() > 0) {
         QByteArray moreData = serial.read(CHUNK_SIZE);
         if (moreData.size() > 0) {
+            qDebug() << "Data got: " << QString(moreData);
             if (rxBuffer.size() + moreData.size() < RX_BUF_SIZE) {
                 rxBuffer.append(moreData);
                 qDebug() << "Complete data received:" << QString(rxBuffer);
@@ -86,6 +87,7 @@ void UartTxRx::processCompleteMessage()
 {
     if (rxBuffer.size() > 0) {
         rx_data = rxBuffer;  // Update rx_data to maintain compatibility
+        qDebug() << "Complete message is: " + QString(rxBuffer);
         emit completeMessageReceived(rxBuffer);
         resetBuffer();
     }

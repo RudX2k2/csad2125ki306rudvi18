@@ -47,6 +47,14 @@ std::string IniByteParser::generateGetGameStateMessage() {
 }
 
 
+std::string IniByteParser::generateCleanGame() {
+    std::stringstream ss;
+    ss << "[CleanGame]\n"
+       << "Client=1\n";
+    return ss.str();
+}
+
+
 std::string IniByteParser::generateSetPlayerTurn(const ClientGameTurn& turn) {
     std::stringstream ss;
     ss << "[SetPlayerTurn]\n"
@@ -68,29 +76,7 @@ GameState IniByteParser::parseGameState(const std::string& iniData) {
 
 
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
-    // QMutexLocker locker(&iniMutex); // Lock the mutex for the duration of this function
-
     parseFromString(message.toStdString());
-    // CSimpleIniA::TNamesDepend sections;
-    // ini.GetAllSections(sections);
-    // for (const auto& section : sections) {
-    //     qDebug() << "[Section:" << section.pItem << "]";
-
-    //     // Iterate through all keys in the section
-    //     CSimpleIniA::TNamesDepend keys;
-    //     ini.GetAllKeys(section.pItem, keys);
-    //     for (const auto& key : keys) {
-    //         const char* value = ini.GetValue(section.pItem, key.pItem, "Default");
-    //         qDebug() << " " << key.pItem << "=" << value;
-    //     }
-    // }
-
-    // if (ini.GetSectionSize("GetTurnResult") > 0) {
-    //     qDebug() << "Section 'GetTurnResult' found";
-    //     qDebug() << "Server:" << QString::fromUtf8(ini.GetValue("GetTurnResult", "Server", 0));
-    // } else {
-    //     qDebug() << "Section 'GetTurnResult' not found in message.";
-    // }
 
     // Parse the INI data
     std::string mode, player1, player2, maxRounds, gameMode, isLoaded, player, turn;
@@ -172,6 +158,20 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
             qDebug("Not set game loaded!");
 
             emit LoadGameToController(false, result_gamestate, message);
+        }
+    }
+    if(ini.GetSectionSize("CleanResult") > 0)
+    {
+        int getCleanResult_serverIncluded = (QString::fromUtf8(ini.GetValue("CleanResult", "Server", "0"))).toInt();
+        if(getCleanResult_serverIncluded == 1)
+        {
+            int getCleanResult_result = (QString::fromUtf8(ini.GetValue("CleanResult", "Result", "99"))).toInt();
+
+            if(getCleanResult_result == 1)
+            {
+                qDebug() << "Good clean result";
+                emit ServerGoodClean();
+            }
         }
     }
     ini.Reset();

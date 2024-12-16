@@ -12,8 +12,6 @@ typedef enum
     EMULATOR_CHOICES_AMOUNT,
 } emulator_player_choice_enum_t;
 
-
-
 typedef enum
 {
     EMULATOR_TURNRESULT_WINNER_ROUND_FIRST,
@@ -24,7 +22,6 @@ typedef enum
     EMULATOR_TURNRESULT_WINNER_GAME_SECOND,
 } emulator_turnresult_winner_t;
 
-
 typedef enum
 {
     EMULATOR_BATTLEMODE_PVP = 0,
@@ -33,8 +30,6 @@ typedef enum
     EMULATOR_BATTLEMODE_IDLE,
     EMULATOR_BATTLEMODE_AMOUNT,
 } emulator_battlemode_enum_t;
-
-
 
 typedef enum
 {
@@ -45,8 +40,7 @@ typedef enum
 
 void EMULATOR_Init(void);
 
-int EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, int player1Score, int player2Score, int curRound, int maxRounds)
-;
+int EMULATOR_SetGameInfo(uint8_t isLoaded, char *mode, int player1Score, int player2Score, int curRound, int maxRounds);
 
 GameState_CommonData_t EMULATOR_GetGameState(void);
 
@@ -64,8 +58,10 @@ void EMULATOR_StartGame(void);
 
 /// @brief Takes singleton `emulator.player_choice` values and add score for the winner in `emulator.players_score`.
 /// @return Result of the turn. Is it was last, and someone win - draw
-emulator_turnresult_winner_t EMULATOR_ChoseWinner();
+emulator_turnresult_winner_t EMULATOR_ChoseWinner(void);
 
 char *EMULATOR_GetBattleModeString(emulator_battlemode_enum_t mode);
+
+void EMULATOR_CleanGame(void);
 
 #endif // EMULATOR_H
