@@ -13,9 +13,9 @@
 #include "freertos/task.h"
 #include "esp_err.h"
 #include "esp_log.h"
-#include "ini_handler/ini_handler.h"
-#include "uart_controller/uart_controller.h"
-#include "emulator/emulator.h"
+#include "../components/ini_handler/include/ini_handler.h"
+#include "../components/uart_controller/include/uart_controller.h"
+#include "../components/emulator/include/emulator.h"
 
 void app_main(void)
 {
