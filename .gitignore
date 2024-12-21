@@ -3,3 +3,7 @@ RPS_GUI/build*
 RPS_CONTROLLER/build*
 
 build/
+
+deploy/
+
+scripts/build-controller.sh

@@ -6,7 +6,7 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 # include($ENV{IDF_PATH}/tools/unit-test-app)
 
 # TODO for test purposes - remove when all will work ;(
-set(BUILD_TESTS_AMOGUS 1)
+# set(BUILD_TESTS_AMOGUS 1)
 set(EXTRA_COMPONENT_DIRS "$ENV{IDF_PATH}/tools/unit-test-app/components" "main")
 # set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/tools/unit-test-app/components)
 
