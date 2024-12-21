@@ -1,41 +1,21 @@
+// UartTxRx.cpp
 #include "UartTxRx.h"
 #include <QDebug>
+#include <QThread>
 
 UartTxRx* UartTxRx::uartTxRx_ = nullptr;
 
-
-// Constructor: initializes the serial port
 UartTxRx::UartTxRx(const QString &portName)
 {
     UartTxRx::InitConnection(portName);
 }
 
-
-UartTxRx::UartTxRx()
+UartTxRx::UartTxRx() : emptyReadsCount(0)
 {
-
+    // Configure and connect timer for checking additional data
+    readTimer.setInterval(20);  // 20ms interval
+    connect(&readTimer, &QTimer::timeout, this, &UartTxRx::checkForMoreData);
 }
-
-
-int UartTxRx::InitConnection(const QString &portName)
-{
-    serial.setPortName(portName);
-    serial.setBaudRate(QSerialPort::Baud115200);
-    serial.setDataBits(QSerialPort::Data8);
-    serial.setParity(QSerialPort::NoParity);
-    serial.setStopBits(QSerialPort::OneStop);
-    serial.setFlowControl(QSerialPort::NoFlowControl);
-
-    if (!serial.open(QIODevice::ReadWrite)) {  // Open for both read and write
-        qDebug() << "Failed to open port" << portName;
-        return -1;
-    } else {
-        port_name = portName;
-        connect(&serial, &QSerialPort::readyRead, this, &UartTxRx::handleReadyRead);
-        return 0;
-    }
-}
-
 
 UartTxRx* UartTxRx::GetInstance()
 {
@@ -46,32 +26,89 @@ UartTxRx* UartTxRx::GetInstance()
     return uartTxRx_;
 }
 
-
-
-// Slot: Handles incoming data when available
-void UartTxRx::handleReadyRead()
+int UartTxRx::InitConnection(const QString &portName)
 {
-    QByteArray data = serial.readAll();
-    qDebug() << "Data received:" << data;
-    rx_data = data;
+    serial.setPortName(portName);
+    serial.setBaudRate(QSerialPort::Baud115200);
+    serial.setDataBits(QSerialPort::Data8);
+    serial.setParity(QSerialPort::NoParity);
+    serial.setStopBits(QSerialPort::OneStop);
+    serial.setFlowControl(QSerialPort::NoFlowControl);
 
-    emit bufferChanged(rx_data);
+    if (!serial.open(QIODevice::ReadWrite)) {
+        qDebug() << "Failed to open port" << portName;
+        return -1;
+    } else {
+        port_name = portName;
+        connect(&serial, &QSerialPort::readyRead, this, &UartTxRx::handleReadyRead);
+        return 0;
+    }
 }
 
-// Method: Sends data over UART
+void UartTxRx::handleReadyRead()
+{
+    QByteArray data = serial.read(CHUNK_SIZE);
+    if (data.size() > 0) {
+        if (rxBuffer.size() + data.size() < RX_BUF_SIZE) {
+            rxBuffer.append(data);
+            emit bufferChanged(rxBuffer);  // Emit signal for partial data
+
+            // Start checking for more data
+            emptyReadsCount = 0;
+            readTimer.start();
+        }
+    }
+}
+
+void UartTxRx::checkForMoreData()
+{
+    if (serial.bytesAvailable() > 0) {
+        QByteArray moreData = serial.read(CHUNK_SIZE);
+        if (moreData.size() > 0) {
+            qDebug() << "Data got: " << QString(moreData);
+            if (rxBuffer.size() + moreData.size() < RX_BUF_SIZE) {
+                rxBuffer.append(moreData);
+                qDebug() << "Complete data received:" << QString(rxBuffer);
+                emit bufferChanged(rxBuffer);
+                emptyReadsCount = 0;  // Reset counter as we got data
+                return;
+            }
+        }
+    }
+
+    emptyReadsCount++;
+    if (emptyReadsCount >= 5) {  // No more data after 5 attempts
+        readTimer.stop();
+        processCompleteMessage();
+    }
+}
+
+void UartTxRx::processCompleteMessage()
+{
+    if (rxBuffer.size() > 0) {
+        rx_data = rxBuffer;  // Update rx_data to maintain compatibility
+        qDebug() << "Complete message is: " + QString(rxBuffer);
+        emit completeMessageReceived(rxBuffer);
+        resetBuffer();
+    }
+}
+
+void UartTxRx::resetBuffer()
+{
+    rxBuffer.clear();
+    emptyReadsCount = 0;
+}
+
 int UartTxRx::sendMessage(const QByteArray &message)
 {
     if (serial.isOpen()) {
-        serial.write(message);
-        if (serial.waitForBytesWritten(1000)) {  // Wait for the data to be written
-            qDebug() << "Message sent:" << message;
-            serial.clear();
-            return 0;
-        } else {
-            qDebug() << "Failed to send message: " << message;
-            serial.clear();
-            return -1;
+        for(int i = 0; i < message.size(); i += 32) {  // Send in 32-byte chunks
+            QByteArray chunk = message.mid(i, 32);
+            serial.write(chunk);
+            serial.flush();
         }
+        qDebug() << "Message sent";
+        return 0;
     } else {
         qDebug() << "Serial port is not open!";
         return -1;
@@ -85,9 +122,9 @@ bool UartTxRx::isConnected()
 
 int UartTxRx::Disconnect()
 {
+    readTimer.stop();  // Stop the timer before disconnecting
     serial.close();
-    if(serial.isOpen())
-    {
+    if(serial.isOpen()) {
         return -1;
     }
     return 0;

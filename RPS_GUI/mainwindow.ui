@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>828</width>
-    <height>609</height>
+    <width>980</width>
+    <height>678</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,7 +45,7 @@
      <rect>
       <x>180</x>
       <y>520</y>
-      <width>591</width>
+      <width>381</width>
       <height>31</height>
      </rect>
     </property>
@@ -54,9 +54,9 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>10</y>
-      <width>591</width>
-      <height>501</height>
+      <y>180</y>
+      <width>381</width>
+      <height>331</height>
      </rect>
     </property>
    </widget>
@@ -96,13 +96,98 @@
      <string>Disconnect</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="btnGoPlay">
+    <property name="geometry">
+     <rect>
+      <x>820</x>
+      <y>10</y>
+      <width>141</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Go Play</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cBoxRoundAmount">
+    <property name="geometry">
+     <rect>
+      <x>850</x>
+      <y>440</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>450</y>
+      <width>191</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Number of rounds</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnLoadGame">
+    <property name="geometry">
+     <rect>
+      <x>669</x>
+      <y>520</y>
+      <width>211</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Load Game</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>380</y>
+      <width>151</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Game mode:</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cBoxGameMode">
+    <property name="geometry">
+     <rect>
+      <x>850</x>
+      <y>358</y>
+      <width>91</width>
+      <height>51</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btnCleanGame">
+    <property name="geometry">
+     <rect>
+      <x>820</x>
+      <y>80</y>
+      <width>141</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clean Game</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>828</width>
+     <width>980</width>
      <height>20</height>
     </rect>
    </property>

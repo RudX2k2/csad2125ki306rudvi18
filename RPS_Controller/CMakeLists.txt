@@ -3,9 +3,20 @@
 cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+# include($ENV{IDF_PATH}/tools/unit-test-app)
+
+# TODO for test purposes - remove when all will work ;(
+# set(BUILD_TESTS_AMOGUS 1)
+set(EXTRA_COMPONENT_DIRS "$ENV{IDF_PATH}/tools/unit-test-app/components" "main")
+# set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/tools/unit-test-app/components)
+
+
+if(NOT BUILD_TESTS_AMOGUS EQUAL 1)
+    set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/main)
+endif()
+
+if(BUILD_TESTS_AMOGUS EQUAL 1)
+    set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/test)
+endif()
 
 project(RPS_Controller)
-
-# Add this line if you are using a custom partition file
-set(PARTITION_TABLE_CUSTOM ${CMAKE_SOURCE_DIR}/partitions.csv)
-idf_build_set_property(PARTITION_TABLE_CUSTOM ${PARTITION_TABLE_CUSTOM})

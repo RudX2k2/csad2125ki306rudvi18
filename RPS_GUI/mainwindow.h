@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <cstring>
+#include "gamewindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -31,7 +32,18 @@ private slots:
 
     void on_btnDisconnected_clicked();
 
+    void on_btnGoPlay_clicked();
+
+    void readyToGame(int configRes);
+
+    void on_btnLoadGame_clicked();
+
+    void readyToGameLoaded(bool res, GameState result_gamestate, const QByteArray & messag);
+
+    void on_btnCleanGame_clicked();
+
 private:
     Ui::MainWindow *ui;
+    GameWindow *gameWindow;
 };
 #endif // MAINWINDOW_H
