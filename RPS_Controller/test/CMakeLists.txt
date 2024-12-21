@@ -7,24 +7,16 @@ cmake_minimum_required(VERSION 3.16)
 # - when using idf.py: idf.py -T xxxxx build
 #
 
-file(COPY yourDir DESTINATION yourDestination)
-
-
-set(EXTRA_COMPONENT_DIRS ../components)
-
-set(EXTRA_COMPONENT_DIRS 
-    ${EXTRA_COMPONENT_DIRS} 
-    /home/rud/esp/esp-idf/tools/unit-test-app/components
-)
+set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} /home/rud/esp/esp-idf/tools/unit-test-app/components)
 
 
 set(TEST_COMPONENTS "emulator" CACHE STRING "List of components to test")
 
 # set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/tools/unit-test-app/components)
 # Create Unity library
-# add_library(unity STATIC
-#     $ENV{IDF_PATH}/tools/unit-test-app/components/unity/unity.c
-# )
+add_library(unity STATIC
+/home/rud/esp/esp-idf/tools/unit-test-app/components/test_utils/test_utils.c
+)
 
 idf_component_register(SRCS "main/some_unit_test.c"
                             "../components/ini_handler/ini_handler.c"
