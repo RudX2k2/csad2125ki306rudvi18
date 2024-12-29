@@ -20,11 +20,13 @@ private:
 private slots:
     void initTestCase();
     void cleanupTestCase();
-    QByteArray simulateResponse(const QByteArray& message);
-    void testUartConnectivity();
-    void testSendConfigMessage();
-    void testParserSignals();
-    void testEndToEndConfigFlow();
+    void testParseINIData_GetConfigResult();
+    void CleanGameStateRequest();
+    void testParseINIData_GetGameState();
+    void testParseINIData_SetPlayerTurn();
+    void testUartSendMessage();
+    void testUartIsConnected();
+
 };
 
 #endif // TESTUARTTXRX_H

@@ -156,10 +156,10 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
         {
             int getCleanResult_result = (QString::fromUtf8(ini.GetValue("CleanResult", "Result", "99"))).toInt();
 
-            if(getCleanResult_result == 1)
+            if(getCleanResult_result == 1 || getCleanResult_result == 0)
             {
                 qDebug() << "Good clean result";
-                emit ServerGoodClean();
+                emit ServerGoodClean(getCleanResult_result);
             }
         }
     }

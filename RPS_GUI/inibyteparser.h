@@ -115,7 +115,7 @@ signals:
     /*!
      * \brief Emitted when the server sends a successful clean game response.
      */
-    void ServerGoodClean();
+    void ServerGoodClean(int result);
 
 public slots:
     /*!
