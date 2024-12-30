@@ -1,1 +1,51 @@
+name: Build and Test Qt RPS_GUI Application
 
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Install Qt and CMake dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt5-qmake qtbase5-dev qtbase5-dev-tools build-essential cmake
+          sudo apt-get install -y libqt5serialport5-dev  # Install Qt5 SerialPort
+
+      ## Step 3: Build the Qt project with tests enabled
+      - name: Build GUI application
+        run: |
+          cd RPS_GUI  # Navigate to the project directory
+          cmake -S . -B build
+          cmake --build build/
+        shell: bash
+
+      # Step 4: Build and Run the tests
+      - name: Build and Run Tests
+        run: |
+          cd RPS_GUI  # Navigate to the project directory
+          cmake -S . -B build-tests -DBUILD_TESTS=ON
+          cd build-tests/
+          cmake --build .
+          xvfb-run -a ctest --verbose
+        shell: bash
+
+      - name: Display test output
+        if: failure()
+        run: |
+          cat RPS_GUI/build-tests/Testing/Temporary/LastTest.log
+        shell: bash
+
+      # Step 5: Upload test results as an artifact
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: RPS_GUI/build-tests/Testing/Temporary/LastTest.log
