@@ -66,26 +66,26 @@ project_root=$(pwd)/..
 deploy_test_results_dir="${project_root}/deploy/test_results"
 rm -rf "${deploy_test_results_dir}" && mkdir -p "${deploy_test_results_dir}"
 
-#cd "${project_root}/RPS_Controller" || exit 1
-#
+cd "${project_root}/RPS_Controller" || exit 1
+
 # Build Controller
-#rm -rf build
-#source /home/rud/esp/esp-idf/export.sh
-#idf.py build
-#
-# Flash the board
-#source /home/rud/esp/esp-idf/export.sh
-#esptool.py -p "$port" -b "$baud_rate" \
-#  --before default_reset \
-#  --after hard_reset \
-#  --chip esp32s3 \
-#  write_flash \
-#  --flash_mode dio \
-#  --flash_size detect \
-#  --flash_freq 40m \
-#  0x0 build/bootloader/bootloader.bin \
-#  0x8000 build/partition_table/partition-table.bin \
-#  0x10000 build/RPS_Controller.bin
+rm -rf build
+source /home/rud/esp/esp-idf/export.sh
+idf.py build
+
+ Flash the board
+source /home/rud/esp/esp-idf/export.sh
+esptool.py -p "$port" -b "$baud_rate" \
+  --before default_reset \
+  --after hard_reset \
+  --chip esp32s3 \
+  write_flash \
+  --flash_mode dio \
+  --flash_size detect \
+  --flash_freq 40m \
+  0x0 build/bootloader/bootloader.bin \
+  0x8000 build/partition_table/partition-table.bin \
+  0x10000 build/RPS_Controller.bin
 
 
 
