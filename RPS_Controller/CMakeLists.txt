@@ -19,4 +19,7 @@ if(BUILD_TESTS_AMOGUS EQUAL 1)
     set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/test)
 endif()
 
+# "Trim" the build. Include the minimal set of components, main, and anything it depends on.
+idf_build_set_property(MINIMAL_BUILD ON)
+
 project(RPS_Controller)

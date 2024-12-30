@@ -4,6 +4,8 @@ RPS_CONTROLLER/build*
 
 build/
 
-deploy/
+deploy/test_results
 
 scripts/build-controller.sh
+
+docs/

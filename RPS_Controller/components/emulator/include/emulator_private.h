@@ -28,6 +28,7 @@ typedef enum
 } emulator_gamestate_enum_t;
 
 
+/// @brief emulator_t is singleton object of emulation manager that has all neeeded data to proccess the game
 typedef struct
 {
     volatile emulator_gamestate_enum_t game_state;

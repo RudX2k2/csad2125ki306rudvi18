@@ -27,6 +27,7 @@
 #define INIHNDLR_CMDBUFF_SIZE 2048
 #define INIHNDLR_SEND_CLIENT_DATA_MAX_SIZE 100
 
+/// @brief INIHNDLR_t is singleton object of ini handler manager
 typedef struct
 {
     char command_buf[INIHNDLR_CMDBUFF_SIZE];
@@ -46,18 +47,23 @@ typedef struct
     bool isIncluded;
 } ClientMsg_GetGameState_t;
 
+
+/// @brief ClientMsg_SetPlayerTurn_t 
 typedef struct
 {
     bool isIncluded;
     SetPlayerTurn_CommonData_t turn_result;
 } ClientMsg_SetPlayerTurn_t;
 
+
+/// @brief ClientMsg_CleanGame_t is message from the client to clean the game
 typedef struct
 {
     bool isIncluded;
 } ClientMsg_CleanGame_t;
 
 
+/// @brief ClientMessage_t is a containings of INI message from the client
 typedef struct
 {
     ClientMsg_SetPlayerTurn_t set_player_turn;
