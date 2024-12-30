@@ -1,0 +1,55 @@
+name: Generate Doxygen Documentation
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  generate-documentation:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Install Doxygen
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+
+      # Generate documentation for RPS_GUI
+      - name: Generate RPS_GUI Documentation
+        run: |
+          chmod +x scripts/GenerateDoxy_RPS_GUI.sh
+          scripts/GenerateDoxy_RPS_GUI.sh
+
+      # Generate documentation for RPS_Controller
+      - name: Generate RPS_Controller Documentation
+        run: |
+          chmod +x scripts/GenerateDoxy_RPS_Controller.sh
+          scripts/GenerateDoxy_RPS_Controller.sh
+
+      # Upload documentation as artifact
+      - name: Upload RPS_GUI Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: rps_gui_docs
+          path: docs/html
+
+      - name: Upload RPS_Controller Documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: rps_controller_docs
+          path: docs/controller/html
+
+      # Optional: Deploy to GitHub Pages
+      # Uncomment the following steps if you want to deploy the documentation
+      # - name: Deploy to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: docs/html
