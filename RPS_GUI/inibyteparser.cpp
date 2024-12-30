@@ -15,14 +15,14 @@ bool IniByteParser::parseFromString(const std::string& data) {
     return (rc >= 0);
 }
 
-std::string IniByteParser::getValue(const std::string& section, const std::string& key, const std::string& defaultValue) {
-    return ini.GetValue(section.c_str(), key.c_str(), defaultValue.c_str());
-}
+// std::string IniByteParser::getValue(const std::string& section, const std::string& key, const std::string& defaultValue) {
+//     return ini.GetValue(section.c_str(), key.c_str(), defaultValue.c_str());
+// }
 
-int IniByteParser::getValueInt(const std::string& section, const std::string& key, int defaultValue) {
-    const char* value = ini.GetValue(section.c_str(), key.c_str());
-    return value ? std::stoi(value) : defaultValue;
-}
+// int IniByteParser::getValueInt(const std::string& section, const std::string& key, int defaultValue) {
+//     const char* value = ini.GetValue(section.c_str(), key.c_str());
+//     return value ? std::stoi(value) : defaultValue;
+// }
 
 
 

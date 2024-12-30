@@ -1,5 +1,6 @@
 import os
 import re
+import webbrowser
 from datetime import datetime
 
 def parse_test_log(log_file):
@@ -106,14 +107,6 @@ def generate_report(deploy_dir):
                     </div>
                 """ for r in test_results['test_results']])}
             </div>
-            
-            <h2>Coverage Summary</h2>
-            <div class="metric {('good' if coverage_results['line_coverage'] > 80 else 'warning' if coverage_results['line_coverage'] > 60 else 'danger')}">
-                Line Coverage: {coverage_results['line_coverage']}%
-            </div>
-            <div class="metric {('good' if coverage_results['function_coverage'] > 80 else 'warning' if coverage_results['function_coverage'] > 60 else 'danger')}">
-                Function Coverage: {coverage_results['function_coverage']}%
-            </div>
         </div>
         
         <div class="coverage-section">
@@ -131,6 +124,8 @@ def generate_report(deploy_dir):
     return output_path
 
 if __name__ == '__main__':
-    deploy_dir = '../deploy'
+    deploy_dir = '/home/rud/csad2125ki406rudvi18/deploy'
     report_path = generate_report(deploy_dir)
     print(f"Report generated at: {report_path}")
+    RdFile = webbrowser.open(report_path)  #Full path to your file
+
