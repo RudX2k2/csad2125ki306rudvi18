@@ -64,17 +64,6 @@ std::string IniByteParser::generateSetPlayerTurn(const ClientGameTurn& turn) {
 }
 
 
-GameState IniByteParser::parseGameState(const std::string& iniData) {
-    parseFromString(iniData);
-    GameState state;
-    state.mode = getValue("GameState", "Mode", "PVP");
-    state.player1Score = getValueInt("GameState", "Player1Score", 0);
-    state.player2Score = getValueInt("GameState", "Player2Score", 0);
-    state.maxRoundsAmount = getValueInt("GameState", "MaxRoundsAmount", 3);
-    return state;
-}
-
-
 void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
     parseFromString(message.toStdString());
 

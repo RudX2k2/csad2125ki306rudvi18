@@ -1,6 +1,8 @@
 #ifndef EMULATOR_COMM_DATA_H
 #define EMULATOR_COMM_DATA_H
 
+
+/// @brief `GameState_CommonData_t` is common data for sending turn result from the server ti client
 typedef struct
 {
     char mode[4];
@@ -11,6 +13,8 @@ typedef struct
     int winner;
 } GameState_CommonData_t;
 
+
+/// @brief GetTurnResult_CommonData_t is common data for sending turn result from the server ti client
 typedef struct
 {
     char mode[4];
@@ -23,6 +27,8 @@ typedef struct
     char choice_p2[9];
 } GetTurnResult_CommonData_t;
 
+
+/// @brief SetPlayerTurn_CommonData_t is commonn turn result sent by the client
 typedef struct{
     char turn[10];
 } SetPlayerTurn_CommonData_t;

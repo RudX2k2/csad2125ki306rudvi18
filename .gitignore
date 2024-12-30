@@ -7,3 +7,5 @@ build/
 deploy/
 
 scripts/build-controller.sh
+
+docs/
