@@ -15,14 +15,14 @@ bool IniByteParser::parseFromString(const std::string& data) {
     return (rc >= 0);
 }
 
-std::string IniByteParser::getValue(const std::string& section, const std::string& key, const std::string& defaultValue) {
-    return ini.GetValue(section.c_str(), key.c_str(), defaultValue.c_str());
-}
+// std::string IniByteParser::getValue(const std::string& section, const std::string& key, const std::string& defaultValue) {
+//     return ini.GetValue(section.c_str(), key.c_str(), defaultValue.c_str());
+// }
 
-int IniByteParser::getValueInt(const std::string& section, const std::string& key, int defaultValue) {
-    const char* value = ini.GetValue(section.c_str(), key.c_str());
-    return value ? std::stoi(value) : defaultValue;
-}
+// int IniByteParser::getValueInt(const std::string& section, const std::string& key, int defaultValue) {
+//     const char* value = ini.GetValue(section.c_str(), key.c_str());
+//     return value ? std::stoi(value) : defaultValue;
+// }
 
 
 
@@ -61,17 +61,6 @@ std::string IniByteParser::generateSetPlayerTurn(const ClientGameTurn& turn) {
        << "Client=1\n"
        << "Turn=" << turn.choice << "\n";
     return ss.str();
-}
-
-
-GameState IniByteParser::parseGameState(const std::string& iniData) {
-    parseFromString(iniData);
-    GameState state;
-    state.mode = getValue("GameState", "Mode", "PVP");
-    state.player1Score = getValueInt("GameState", "Player1Score", 0);
-    state.player2Score = getValueInt("GameState", "Player2Score", 0);
-    state.maxRoundsAmount = getValueInt("GameState", "MaxRoundsAmount", 3);
-    return state;
 }
 
 
@@ -167,10 +156,10 @@ void IniByteParser::INIBYTEPARSER_ParseINIData(const QByteArray &message){
         {
             int getCleanResult_result = (QString::fromUtf8(ini.GetValue("CleanResult", "Result", "99"))).toInt();
 
-            if(getCleanResult_result == 1)
+            if(getCleanResult_result == 1 || getCleanResult_result == 0)
             {
                 qDebug() << "Good clean result";
-                emit ServerGoodClean();
+                emit ServerGoodClean(getCleanResult_result);
             }
         }
     }

@@ -1,31 +1,98 @@
 #include "testuarttxrx.h"
 
+Q_DECLARE_METATYPE(GameState)
+
+void registerCustomTypes()
+{
+    qRegisterMetaType<GameState>("GameState");
+}
+
+
 // TestUartTxRx member function implementations
 bool TestUartTxRx::waitForResponse(QSignalSpy& spy, int timeout) {
     return spy.wait(timeout);
 }
 
-QByteArray TestUartTxRx::simulateResponse(const QByteArray& message) {
-    if (message.contains("[CleanGame]")) {
-        return QByteArray("[CleanGameResult]\nSuccess=1\n");
-    } else if (message.contains("[SetGameConfig]")) {
-        return QByteArray("[GetConfigResult]\nResult=1\n");
-    } else if (message.contains("[InvalidConfig]")) {
-        return QByteArray("[Error]\nInvalidData=1\n");
+void TestUartTxRx::SetConnectionUART()
+{
+    uart = UartTxRx::GetInstance();
+
+    if(uart->isConnected())
+    {
+        qDebug() << "UART already initialized";
+
+    }else{
+        int err = 99;
+        err = uart->InitConnection("/dev/ttyACM1");
+        QVERIFY(err == 0);
+        qDebug() << "UART initialized successfully";
     }
-    return QByteArray(); // Default empty response
 }
 
 void TestUartTxRx::initTestCase() {
     try {
-        uart = new UartTxRx(); // Use the real class
+        registerCustomTypes();
+        // uart = UartTxRx::GetInstance();
         iniParser = IniByteParser::GetInstance();
 
-        QVERIFY(uart->InitConnection("mock-port"));
-        qDebug() << "UART initialized successfully";
     } catch (const std::exception& e) {
         QFAIL(qPrintable(QString("Exception in initTestCase: %1").arg(e.what())));
     }
+}
+
+
+void TestUartTxRx::testIniByteParserGeneratorMsg_GenerateSetGameStateMessage()
+{
+    iniParser = IniByteParser::GetInstance();
+
+    GameState game_state = {.isLoaded=0, .mode="EVE", .maxRoundsAmount=3};
+    std::string setGameMessage = iniParser->generateSetGameStateMessage(game_state);
+
+    QVERIFY(!setGameMessage.empty());
+}
+
+
+void TestUartTxRx::testIniByteParserGeneratorMsg_GenerateSetPlayerTurn(){
+    iniParser = IniByteParser::GetInstance();
+
+    ClientGameTurn turn = {.choice = "ROCK"};
+    std::string setPlayerTurnMessage = iniParser->generateSetPlayerTurn(turn);
+
+    QVERIFY(!setPlayerTurnMessage.empty());
+}
+
+
+void TestUartTxRx::testIniByteParserGeneratorMsg_GenerateGetGameStateMessage(){
+    iniParser = IniByteParser::GetInstance();
+
+    ClientGameTurn turn = {.choice = "ROCK"};
+    std::string getGameStateMessage = iniParser->generateGetGameStateMessage();
+
+    QVERIFY(!getGameStateMessage.empty());
+}
+
+
+void TestUartTxRx::testUartSendMessage() {
+    TestUartTxRx::SetConnectionUART();
+    int err = uart->GetInstance()->sendMessage("Amogus");
+
+    QVERIFY(err == 0);
+}
+
+void TestUartTxRx::testUartIsConnected()
+{
+    TestUartTxRx::SetConnectionUART();
+    bool err = uart->GetInstance()->isConnected();
+    QVERIFY(err == true);
+}
+
+void TestUartTxRx::CleanGameStateRequest()
+{
+    std::string cleanGameMessage = iniParser->generateCleanGame();
+
+    QSignalSpy cleanSpy(iniParser, &IniByteParser::ServerGoodClean);
+
+    uart->sendMessage(QByteArray::fromStdString(cleanGameMessage));
 }
 
 void TestUartTxRx::cleanupTestCase() {
@@ -35,76 +102,83 @@ void TestUartTxRx::cleanupTestCase() {
     }
 }
 
-void TestUartTxRx::testUartConnectivity() {
-    QVERIFY(uart != nullptr);
-    QVERIFY(uart->isConnected());
-}
+void TestUartTxRx::testParseINIData_GetConfigResult()
+{
+    TestUartTxRx::SetConnectionUART();
+    TestUartTxRx::CleanGameStateRequest();
+    std::string cleanGameMessage = iniParser->generateCleanGame();
 
-void TestUartTxRx::testSendConfigMessage() {
-    QSignalSpy cleanGameOkSpy(uart, &UartTxRx::completeMessageReceived);
-
-    QByteArray cleanGameMessage("[CleanGame]\nClient=1\n");
-
-    // Inject the mock response directly into the signal
-    connect(uart, &UartTxRx::sendMessage, this, [=](const QByteArray& message) {
-        emit uart->completeMessageReceived(simulateResponse(message));
-    });
-
-    uart->sendMessage(cleanGameMessage);
-
-    QVERIFY(waitForResponse(cleanGameOkSpy, 1));
-
-    QByteArray response = cleanGameOkSpy.takeFirst().at(0).toByteArray();
-    QVERIFY(response.contains("Success=1"));
-}
-
-void TestUartTxRx::testParserSignals() {
-    QSignalSpy uartSpy(uart, &UartTxRx::completeMessageReceived);
     QSignalSpy parserSpy(iniParser, &IniByteParser::ServerGoodConfig);
+    GameState game_state = {.isLoaded=0, .mode="EVE", .maxRoundsAmount=3};
 
-    QByteArray message("[SetGameConfig]\nClient=1\nData1=1\nData2=2\n");
+    uart->sendMessage(QByteArray::fromStdString(iniParser->generateSetGameStateMessage(game_state)));
 
-    // Inject the mock response directly into the signal
-    connect(uart, &UartTxRx::sendMessage, this, [=](const QByteArray& message) {
-        emit uart->completeMessageReceived(simulateResponse(message));
-    });
+    qDebug() << "Wait for responce...";
 
-    uart->sendMessage(message);
-
-    QVERIFY(waitForResponse(uartSpy));
-    QVERIFY(waitForResponse(parserSpy));
-
-    QList<QVariant> args = parserSpy.takeFirst();
-    QCOMPARE(args.at(0).toInt(), 1); // Expecting Result=1
+    // Wait and verify signal value in one step
+    QVERIFY(parserSpy.wait(1000) && parserSpy.first().at(0).toInt() == 1);
 }
 
-void TestUartTxRx::testEndToEndConfigFlow() {
-    QSignalSpy uartSpy(uart, &UartTxRx::completeMessageReceived);
-    QSignalSpy parserSpy(iniParser, &IniByteParser::ServerGoodConfig);
 
-    QByteArray invalidMessage("[InvalidConfig]\nBadData=1\n");
+void TestUartTxRx::testParseINIData_GetGameState()
+{
+    TestUartTxRx::SetConnectionUART();
+    TestUartTxRx::CleanGameStateRequest();
 
-    // Inject the mock response directly into the signal
-    connect(uart, &UartTxRx::sendMessage, this, [=](const QByteArray& message) {
-        emit uart->completeMessageReceived(simulateResponse(message));
-    });
+    QSignalSpy parserSpy(iniParser, &IniByteParser::ServerSentGameState);
 
-    uart->sendMessage(invalidMessage);
+    uart->sendMessage(QByteArray::fromStdString(iniParser->generateGetGameStateMessage()));
 
-    if (waitForResponse(uartSpy)) {
-        QByteArray response = uartSpy.takeFirst().at(0).toByteArray();
-        qDebug() << "Response to invalid message:" << response;
-    }
+    qDebug() << "Wait for responce...";
 
-    QByteArray validMessage("[SetGameConfig]\nClient=1\nData1=1\nData2=2\n");
-    uart->sendMessage(validMessage);
+    QVERIFY(parserSpy.wait(1000));
 
-    QVERIFY(waitForResponse(uartSpy));
-    QVERIFY(waitForResponse(parserSpy));
+    // Verify that the signal was emitted at least once
+    QVERIFY(parserSpy.count() > 0);
 
-    QByteArray finalResponse = uartSpy.takeFirst().at(0).toByteArray();
-    QVERIFY(finalResponse.contains("[GetConfigResult]"));
-    QVERIFY(finalResponse.contains("Result=1"));
+    // Access the first signal's argument
+    QVariantList arguments = parserSpy.takeFirst(); // Get the first signal's data
+    QVERIFY(arguments.count() > 0);
+
+    // Extract and cast the argument to GameState
+    GameState gameState = qvariant_cast<GameState>(arguments.at(0));
+
+    // Perform additional checks on gameState
+    QVERIFY(!(gameState.mode == ""));
+    // QCOMPARE(gameState.someOtherField, expectedValue); // Example comparison
 }
+
+void TestUartTxRx::testParseINIData_SetPlayerTurn()
+{
+    TestUartTxRx::SetConnectionUART();
+    CleanGameStateRequest();
+
+    QSignalSpy parserSpy(iniParser, &IniByteParser::ServerSentTurnResult);
+
+    GameState game_state = {.isLoaded=0, .mode="PVE", .maxRoundsAmount=1};
+    uart->sendMessage(QByteArray::fromStdString(iniParser->generateSetGameStateMessage(game_state)));
+    qDebug() << "Sent set game";
+
+
+    ClientGameTurn turn = {.choice = "ROCK"};
+    uart->sendMessage(QByteArray::fromStdString(iniParser->generateSetPlayerTurn(turn)));
+
+    QVERIFY(parserSpy.wait(1000));
+
+    // Verify that the signal was emitted at least once
+    QVERIFY(parserSpy.count() > 0);
+
+    // Access the first signal's argument
+    QVariantList arguments = parserSpy.takeFirst(); // Get the first signal's data
+    QVERIFY(arguments.count() > 0);
+
+    // Extract and cast the argument to GameState
+    GameState gameState = qvariant_cast<GameState>(arguments.at(0));
+
+    // Perform additional checks on gameState
+    QVERIFY(!(gameState.mode == ""));
+    // QCOMPARE(gameState.someOtherField, expectedValue); // Example comparison
+}
+
 
 QTEST_MAIN(TestUartTxRx)
